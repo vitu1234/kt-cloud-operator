@@ -143,16 +143,6 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			//CHECK NETWORK STUFF ONLY IF THE MACHINE STATUS IS ACTIVE
 			if ktMachine.Status.Status == "ACTIVE" {
 
-				if cluster.Spec.ManagedSecurityGroups.ControlPlaneRules.Direction != "" {
-
-					//rules to apply
-					err = httpapi.AddFirewallSettings(ktMachine, subjectToken, cluster.Spec.ManagedSecurityGroups.ControlPlaneRules)
-					if err != nil {
-						logger.Error(err, "Failed to add firewall settings for the cluster ---REMOVE BLOCK")
-						return ctrl.Result{RequeueAfter: time.Minute}, nil
-					}
-				}
-
 				if cluster.Spec.ControlPlaneExternalNetworkEnable && len(ktMachine.Status.AssignedPublicIps) == 0 {
 					err = httpapi.AttachPublicIP(ktMachine, subjectToken)
 					if err != nil {

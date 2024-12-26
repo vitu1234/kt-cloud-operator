@@ -53,8 +53,8 @@ type PostPayload struct {
 
 // POst payload for Firewall settings
 type PostPayloadFirewallSettings struct {
-	StartPort    int    `json:"startport"`
-	EndPort      int    `json:"endport"`
+	StartPort    string `json:"startport"`
+	EndPort      string `json:"endport"`
 	Action       string `json:"action"`
 	Protocol     string `json:"protocol"`
 	DstIp        string `json:"dstip"`
@@ -76,6 +76,17 @@ type NATAttachResponse struct {
 type NcEnableStaticNatResponse struct {
 	DisplayText string `json:"displaytext"`
 	Success     bool   `json:"success"`
+}
+
+// create firewall settings response
+type AddFirewallSettingsResponse struct {
+	NcCreateFirewallRuleResponse NcCreateFirewallRuleResponse `json:"nc_createfirewallruleresponse"`
+}
+
+type NcCreateFirewallRuleResponse struct {
+	DisplayText string `json:"displaytext"`
+	Success     bool   `json:"success"`
+	JobId       string `json:"job_id"`
 }
 
 // get networks response
@@ -688,17 +699,18 @@ func AddFirewallSettings(machine *v1beta1.KTMachine, token string, securityGroup
 		logger1.Info("POST request successful and added firewall settings for the cluster!")
 
 		// Parse the JSON into the struct
-		var serverResponse NATAttachResponse
+		var serverResponse AddFirewallSettingsResponse
 		err = json.Unmarshal(body, &serverResponse)
 		if err != nil {
 			logger1.Error("Error unmarshaling JSON response:", err)
 			return err
 		}
 
-		// logger1.Info("Response Text: " + serverResponse.NcEnableStaticNatResponse.DisplayText)
+		responseText, _ := json.Marshal(serverResponse)
+		logger1.Info("Response Text: " + string(responseText))
 
-		if !serverResponse.NcEnableStaticNatResponse.Success {
-			return errors.New(serverResponse.NcEnableStaticNatResponse.DisplayText)
+		if serverResponse.NcCreateFirewallRuleResponse.DisplayText != "" {
+			return errors.New(serverResponse.NcCreateFirewallRuleResponse.DisplayText)
 		}
 
 		logger1.Info("Added firewall settings to the cluster ")

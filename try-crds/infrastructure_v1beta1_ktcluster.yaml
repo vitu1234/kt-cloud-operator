@@ -15,15 +15,15 @@ spec:
   managedSecurityGroups:
     controlPlaneRules:
       direction: ingress
-      startPort: 1
-      endPort: 65535
+      startPort: "1"
+      endPort: "65535"
       protocol: ALL
       dstip: "0.0.0.0/0"
       action: allow
     workerRules:
       direction: egress
-      startPort: 1
-      endPort: 65535
+      startPort: "1"
+      endPort: "65535"
       protocol: ALL
       dstip: "0.0.0.0/0"
       action: allow

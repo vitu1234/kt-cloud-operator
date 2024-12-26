@@ -60,8 +60,8 @@ type ManagedSecurityGroups struct {
 // SecurityGroupRule represents individual security group rules
 type SecurityGroupRule struct {
 	Direction string `json:"direction,omitempty"`
-	StartPort int    `json:"startPort,omitempty"`
-	EndPort   int    `json:"endPort,omitempty"`
+	StartPort string `json:"startPort,omitempty"`
+	EndPort   string `json:"endPort,omitempty"`
 	Protocol  string `json:"protocol,omitempty"`
 	Action    string `json:"action,omitempty"`
 	Dstip     string `json:"dstip,omitempty"`

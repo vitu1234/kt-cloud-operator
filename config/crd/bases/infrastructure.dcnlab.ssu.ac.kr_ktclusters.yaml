@@ -73,11 +73,11 @@ spec:
                       dstip:
                         type: string
                       endPort:
-                        type: integer
+                        type: string
                       protocol:
                         type: string
                       startPort:
-                        type: integer
+                        type: string
                     type: object
                   workerRules:
                     description: SecurityGroupRule represents individual security
@@ -90,11 +90,11 @@ spec:
                       dstip:
                         type: string
                       endPort:
-                        type: integer
+                        type: string
                       protocol:
                         type: string
                       startPort:
-                        type: integer
+                        type: string
                     type: object
                 type: object
             type: object
