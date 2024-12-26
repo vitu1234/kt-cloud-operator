@@ -119,6 +119,17 @@ spec:
                       type: string
                     ip:
                       type: string
+                    pairedPvtNetwork:
+                      properties:
+                        networkID:
+                          type: string
+                        networkName:
+                          type: string
+                        networkOsID:
+                          type: string
+                        vmPvtIp:
+                          type: string
+                      type: object
                   type: object
                 type: array
               OS-DCF:diskConfig:

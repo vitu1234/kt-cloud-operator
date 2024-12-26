@@ -140,25 +140,39 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 				}
 			}
 
-			if cluster.Spec.ControlPlaneExternalNetworkEnable && len(ktMachine.Status.AssignedPublicIps) == 0 {
-				err = httpapi.AttachPublicIP(ktMachine, subjectToken)
-				if err != nil {
-					logger.Error(err, "Failed to attach network to Machine")
-					return ctrl.Result{RequeueAfter: time.Minute}, nil
-				}
-				//we have to fix firewall settings
+			//CHECK NETWORK STUFF ONLY IF THE MACHINE STATUS IS ACTIVE
+			if ktMachine.Status.Status == "ACTIVE" {
+
 				if cluster.Spec.ManagedSecurityGroups.ControlPlaneRules.Direction != "" {
 
 					//rules to apply
 					err = httpapi.AddFirewallSettings(ktMachine, subjectToken, cluster.Spec.ManagedSecurityGroups.ControlPlaneRules)
 					if err != nil {
-						logger.Error(err, "Failed to add firewall settings for the cluster")
+						logger.Error(err, "Failed to add firewall settings for the cluster ---REMOVE BLOCK")
 						return ctrl.Result{RequeueAfter: time.Minute}, nil
 					}
 				}
 
-				//we are done with the control plane
+				if cluster.Spec.ControlPlaneExternalNetworkEnable && len(ktMachine.Status.AssignedPublicIps) == 0 {
+					err = httpapi.AttachPublicIP(ktMachine, subjectToken)
+					if err != nil {
+						logger.Error(err, "Failed to attach network to Machine")
+						return ctrl.Result{RequeueAfter: time.Minute}, nil
+					}
+					//we have to fix firewall settings
+					if cluster.Spec.ManagedSecurityGroups.ControlPlaneRules.Direction != "" {
 
+						//rules to apply
+						err = httpapi.AddFirewallSettings(ktMachine, subjectToken, cluster.Spec.ManagedSecurityGroups.ControlPlaneRules)
+						if err != nil {
+							logger.Error(err, "Failed to add firewall settings for the cluster")
+							return ctrl.Result{RequeueAfter: time.Minute}, nil
+						}
+					}
+
+					//we are done with the control plane
+
+				}
 			}
 			logger.Info("Skip adding public IP address to Machine already added")
 

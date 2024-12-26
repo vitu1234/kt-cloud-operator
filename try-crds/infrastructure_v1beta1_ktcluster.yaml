@@ -13,26 +13,20 @@ spec:
     cloudName: openstack
     name: edge01-cloud-config
   managedSecurityGroups:
-    allNodesSecurityGroupRules:
-    - description: this is for control plane only
+    controlPlaneRules:
       direction: ingress
-      portRangeMax: 1
-      portRangeMin: 65535
+      startPort: 1
+      endPort: 65535
       protocol: ALL
       dstip: "0.0.0.0/0"
       action: allow
-      appliesTo:
-      - controlplane
-    - description: this is for all nodes
+    workerRules:
       direction: egress
-      portRangeMax: 1
-      portRangeMin: 65535
+      startPort: 1
+      endPort: 65535
       protocol: ALL
       dstip: "0.0.0.0/0"
       action: allow
-      appliesTo:
-      - controlplane
-      - worker
   # managedSubnets:
   # - cidr: 10.6.0.0/24
   #   dnsNameservers:

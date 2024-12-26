@@ -79,33 +79,47 @@ type NcEnableStaticNatResponse struct {
 }
 
 // get networks response
+type ListNetworksResponse struct {
+	NcListOsNetworksResponse NcListOsNetworksResponse `json:"nc_listosnetworksresponse"`
+}
 type NcListOsNetworksResponse struct {
 	Networks []NetworkData `json:"networks"`
 }
 
 type NetworkData struct {
-	EndIP          string   `json:"endip"`
-	Shared         bool     `json:"shared"`
-	StartIP        string   `json:"startip"`
-	Type           string   `json:"type"`
-	SSLVPN         string   `json:"sslvpn"`
-	VLAN           string   `json:"vlan"`
-	EntPublicCIDRs []string `json:"entpubliccidrs"`
-	Netmask        string   `json:"netmask"`
-	VPCID          string   `json:"vpcid"`
-	Name           string   `json:"name"`
-	MainNetworkID  string   `json:"mainnetworkid"`
-	ZoneID         string   `json:"zoneid"`
-	DataLakeYN     string   `json:"datalakeyn"`
-	CIDR           string   `json:"cidr"`
-	ID             string   `json:"id"`
-	ProjectID      string   `json:"projectid"`
-	Gateway        string   `json:"gateway"`
-	ISCSIStartIP   string   `json:"iscsistartip"`
-	ISCSIEndIP     string   `json:"iscsiendip"`
-	Account        string   `json:"account"`
-	OSNetworkID    string   `json:"osnetworkid"`
-	Status         string   `json:"status"`
+	EndIP   string `json:"endip"`
+	Shared  string `json:"shared"`
+	StartIP string `json:"startip"`
+	Type    string `json:"type"`
+	SSLVPN  string `json:"sslvpn"`
+	VLAN    string `json:"vlan"`
+	// EntPublicCIDRs []string `json:"entpubliccidrs"`
+	Netmask       string `json:"netmask"`
+	VPCID         string `json:"vpcid"`
+	Name          string `json:"name"`
+	MainNetworkID string `json:"mainnetworkid"`
+	ZoneID        string `json:"zoneid"`
+	DataLakeYN    string `json:"datalakeyn"`
+	CIDR          string `json:"cidr"`
+	ID            string `json:"id"`
+	ProjectID     string `json:"projectid"`
+	Gateway       string `json:"gateway"`
+	ISCSIStartIP  string `json:"iscsistartip"`
+	ISCSIEndIP    string `json:"iscsiendip"`
+	Account       string `json:"account"`
+	OSNetworkID   string `json:"osnetworkid"`
+	Status        string `json:"status"`
+}
+
+type ListVpcsResponse struct {
+	NcListVpcResponse NcListVpcResponse `json:"nc_listvpcsresponse"`
+}
+type NcListVpcResponse struct {
+	Vpcs []Vpc `json:"vpcs"`
+}
+
+type Vpc struct {
+	Networks []NetworkData `json:"networks"`
 }
 
 // list VPC response
@@ -374,7 +388,7 @@ func GetAssignedPublicIpAddresses(token string) (NcListentPublicIpsResponse, err
 	defer resp.Body.Close()
 
 	// Handle the response
-	fmt.Println("Response Status:", resp.Status)
+	// fmt.Println("Response Status:", resp.Status)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		logger1.Error("Error reading response body:", err)
@@ -397,9 +411,15 @@ func GetAssignedPublicIpAddresses(token string) (NcListentPublicIpsResponse, err
 
 		filteredResponse := NcListentPublicIpsResponse{}
 		filteredPublicIps := []PublicIp{}
+
+		publicIps := serverResponse.NcListentPublicIpsResponse.PublicIps
+
 		for i := 0; i < len(serverResponse.NcListentPublicIpsResponse.PublicIps); i++ {
-			publicIps := serverResponse.NcListentPublicIpsResponse.PublicIps
-			if len(publicIps[i].VirtualIps) == 0 && publicIps[i].Type == "STATICNAT" {
+
+			if len(publicIps[i].VirtualIps) > 0 && publicIps[i].Type == "STATICNAT" {
+
+				// logger1.Info("For loop "+strconv.Itoa(i), publicIps)
+
 				publicIP := PublicIp{
 					EntPublicCIDRId: publicIps[i].EntPublicCIDRId,
 					VirtualIps:      publicIps[i].VirtualIps,
@@ -467,7 +487,7 @@ func GetNetworkIdByName(token, network_name string) (NetworkData, error) {
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		logger1.Info("GET request successful and got machine!")
 		// Parse the JSON into the struct
-		var serverResponse NcListOsNetworksResponse
+		var serverResponse ListNetworksResponse
 		err = json.Unmarshal(body, &serverResponse)
 		if err != nil {
 			logger1.Error("Error unmarshaling JSON response:", err)
@@ -475,11 +495,16 @@ func GetNetworkIdByName(token, network_name string) (NetworkData, error) {
 		}
 
 		filteredResponse := NetworkData{}
-		for i := 0; i < len(serverResponse.Networks); i++ {
-			if serverResponse.Networks[i].Name == network_name {
-				filteredResponse = serverResponse.Networks[i]
+		for i := 0; i < len(serverResponse.NcListOsNetworksResponse.Networks); i++ {
+			// logger1.Info("NETWORK NAME SERVER: ", network_name)
+			// logger1.Info("-------------------------------------")
+			// logger1.Info("NETWORK 	FILTERED RESPONSE: ", serverResponse.NcListOsNetworksResponse.Networks[i].Name)
+			if serverResponse.NcListOsNetworksResponse.Networks[i].Name == network_name {
+				filteredResponse = serverResponse.NcListOsNetworksResponse.Networks[i]
 			}
 		}
+
+		// logger1.Info("Lenmhgth: ", serverResponse)
 		return filteredResponse, nil
 
 	} else {
@@ -532,14 +557,14 @@ func GetListVpcNetworks(token string) ([]NetworkData, error) {
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		logger1.Info("GET request successful and got machine!")
 		// Parse the JSON into the struct
-		var serverResponse NcListVPCResponse
+		var serverResponse ListVpcsResponse
 		err = json.Unmarshal(body, &serverResponse)
 		if err != nil {
 			logger1.Error("Error unmarshaling JSON response:", err)
 			return []NetworkData{}, err
 		}
 
-		filteredResponse := serverResponse.Networks
+		filteredResponse := serverResponse.NcListVpcResponse.Vpcs[0].Networks //HOW TO IDENTIFY A VPC INCASE WE HAVE MULTIPLE VPCs
 
 		return filteredResponse, nil
 

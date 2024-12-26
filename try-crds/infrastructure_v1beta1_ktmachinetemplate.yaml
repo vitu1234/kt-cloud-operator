@@ -8,7 +8,7 @@ metadata:
 spec:
   template:
     spec:
-      flavor: a12c8f89-e8f7-4f68-9c00-e376f9a1ab8d
+      flavor: 704ee1ca-4720-4f6a-b05a-669060940186
       blockDeviceMapping:
         - id: ece8ab48-0752-4de0-bf93-f189c60946de
           bootIndex: 0
