@@ -14,26 +14,27 @@ spec:
     name: edge01-cloud-config
   managedSecurityGroups:
     allNodesSecurityGroupRules:
-    - description: Created by cluster-api-provider-openstack - BGP (calico)
+    - description: this is for control plane only
       direction: ingress
-      etherType: IPv4
-      name: BGP (Calico)
-      portRangeMax: 179
-      portRangeMin: 179
-      protocol: tcp
-      remoteManagedGroups:
+      portRangeMax: 1
+      portRangeMin: 65535
+      protocol: ALL
+      dstip: "0.0.0.0/0"
+      action: allow
+      appliesTo:
+      - controlplane
+    - description: this is for all nodes
+      direction: egress
+      portRangeMax: 1
+      portRangeMin: 65535
+      protocol: ALL
+      dstip: "0.0.0.0/0"
+      action: allow
+      appliesTo:
       - controlplane
       - worker
-    - description: Created by cluster-api-provider-openstack - IP-in-IP (calico)
-      direction: ingress
-      etherType: IPv4
-      name: IP-in-IP (calico)
-      protocol: "4"
-      remoteManagedGroups:
-      - controlplane
-      - worker
-  managedSubnets:
-  - cidr: 10.6.0.0/24
-    dnsNameservers:
-    - 8.8.8.8
+  # managedSubnets:
+  # - cidr: 10.6.0.0/24
+  #   dnsNameservers:
+  #   - 8.8.8.8
 

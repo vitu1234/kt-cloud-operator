@@ -44,8 +44,16 @@ type Networks struct {
 }
 
 type AssignedPublicIps struct {
-	IP string `json:"ip,omitempty"`
-	Id string `json:"id,omitempty"`
+	IP               string           `json:"ip,omitempty"`
+	Id               string           `json:"id,omitempty"`
+	PairedPvtNetwork PairedPvtNetwork `json:"pairedPvtNetwork,omitempty"`
+}
+
+type PairedPvtNetwork struct {
+	NetworkName string `json:"networkName,omitempty"`
+	NetworkID   string `json:"networkID,omitempty"`
+	NetworkOsID string `json:"networkOsID,omitempty"`
+	VMPvtIP     string `json:"vmPvtIp,omitempty"`
 }
 
 // KTMachineStatus defines the observed state of KTMachine.

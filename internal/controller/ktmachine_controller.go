@@ -98,7 +98,7 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		// if ktMachine.Status.Status == "Creating" {
 		// if ktMachine.Status.Status == "Creating" {
 		serverResponse, err := httpapi.GetCreatedVM(ktMachine, subjectToken)
-		if err != nil && serverResponse != nil {
+		if err != nil || serverResponse == nil {
 			logger.Error(err, "Failed to query VM on KT Cloud during API Call")
 			return ctrl.Result{RequeueAfter: time.Minute}, nil
 		}
@@ -147,6 +147,18 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 					return ctrl.Result{RequeueAfter: time.Minute}, nil
 				}
 				//we have to fix firewall settings
+				if cluster.Spec.ManagedSecurityGroups.ControlPlaneRules.Direction != "" {
+
+					//rules to apply
+					err = httpapi.AddFirewallSettings(ktMachine, subjectToken, cluster.Spec.ManagedSecurityGroups.ControlPlaneRules)
+					if err != nil {
+						logger.Error(err, "Failed to add firewall settings for the cluster")
+						return ctrl.Result{RequeueAfter: time.Minute}, nil
+					}
+				}
+
+				//we are done with the control plane
+
 			}
 			logger.Info("Skip adding public IP address to Machine already added")
 

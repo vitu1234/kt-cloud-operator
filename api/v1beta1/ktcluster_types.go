@@ -32,7 +32,7 @@ type KTClusterSpec struct {
 	ControlPlaneExternalNetworkEnable bool                  `json:"controlPlaneExternalNetworkEnable,omitempty"`
 	IdentityRef                       IdentityRef           `json:"identityRef,omitempty"`
 	ManagedSecurityGroups             ManagedSecurityGroups `json:"managedSecurityGroups,omitempty"`
-	ManagedSubnets                    []ManagedSubnet       `json:"managedSubnets,omitempty"`
+	// ManagedSubnets                    []ManagedSubnet       `json:"managedSubnets,omitempty"`
 }
 
 // APIServerLoadBalancer represents the API server load balancer settings
@@ -53,31 +53,31 @@ type IdentityRef struct {
 
 // ManagedSecurityGroups contains security group rules for nodes
 type ManagedSecurityGroups struct {
-	AllNodesSecurityGroupRules []SecurityGroupRule `json:"allNodesSecurityGroupRules,omitempty"`
+	ControlPlaneRules SecurityGroupRule `json:"controlPlaneRules,omitempty"`
+	WorkerRules       SecurityGroupRule `json:"workerRules,omitempty"`
 }
 
 // SecurityGroupRule represents individual security group rules
 type SecurityGroupRule struct {
-	Description         string   `json:"description,omitempty"`
-	Direction           string   `json:"direction,omitempty"`
-	EtherType           string   `json:"etherType,omitempty"`
-	Name                string   `json:"name,omitempty"`
-	PortRangeMin        int      `json:"portRangeMin,omitempty"`
-	PortRangeMax        int      `json:"portRangeMax,omitempty"`
-	Protocol            string   `json:"protocol,omitempty"`
-	RemoteManagedGroups []string `json:"remoteManagedGroups,omitempty"`
+	Direction string `json:"direction,omitempty"`
+	StartPort int    `json:"startPort,omitempty"`
+	EndPort   int    `json:"endPort,omitempty"`
+	Protocol  string `json:"protocol,omitempty"`
+	Action    string `json:"action,omitempty"`
+	Dstip     string `json:"dstip,omitempty"`
 }
 
 // ManagedSubnet defines a subnet with CIDR and DNS settings
-type ManagedSubnet struct {
-	CIDR           string   `json:"cidr,omitempty"`
-	DNSNameServers []string `json:"dnsNameservers,omitempty"`
-}
+// type ManagedSubnet struct {
+// 	CIDR           string   `json:"cidr,omitempty"`
+// 	DNSNameServers []string `json:"dnsNameservers,omitempty"`
+// }
 
 // KTClusterStatus defines the observed state of KTCluster.
 type KTClusterStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	// SecurityGroupsAvailable bool `json:"securityGroups,omitempty"`
 }
 
 // +kubebuilder:object:root=true

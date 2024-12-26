@@ -10,7 +10,7 @@ spec:
     spec:
       flavor: a12c8f89-e8f7-4f68-9c00-e376f9a1ab8d
       blockDeviceMapping:
-        - id: 1b92ca45-20ab-4437-88b7-e132e6a0c47e
+        - id: ece8ab48-0752-4de0-bf93-f189c60946de
           bootIndex: 0
           sourceType: image
           volumeSize: 50

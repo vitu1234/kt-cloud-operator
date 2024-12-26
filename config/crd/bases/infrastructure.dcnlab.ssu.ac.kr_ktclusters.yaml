@@ -67,42 +67,39 @@ spec:
                       description: SecurityGroupRule represents individual security
                         group rules
                       properties:
+                        action:
+                          type: string
+                        appliesTo:
+                          items:
+                            type: string
+                          type: array
                         description:
                           type: string
                         direction:
                           type: string
-                        etherType:
-                          type: string
-                        name:
+                        dstip:
                           type: string
                         portRangeMax:
                           type: integer
                         portRangeMin:
+                          description: |-
+                            EtherType           string   `json:"etherType,omitempty"`
+                            Name                string   `json:"name,omitempty"`
                           type: integer
                         protocol:
                           type: string
-                        remoteManagedGroups:
-                          items:
-                            type: string
-                          type: array
                       type: object
                     type: array
                 type: object
-              managedSubnets:
-                items:
-                  description: ManagedSubnet defines a subnet with CIDR and DNS settings
-                  properties:
-                    cidr:
-                      type: string
-                    dnsNameservers:
-                      items:
-                        type: string
-                      type: array
-                  type: object
-                type: array
             type: object
           status:
             description: KTClusterStatus defines the observed state of KTCluster.
+            properties:
+              securityGroups:
+                description: |-
+                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+                  Important: Run "make" to regenerate code after modifying this file
+                type: boolean
             type: object
         type: object
     served: true
