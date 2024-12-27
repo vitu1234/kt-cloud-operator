@@ -98,8 +98,8 @@ type NcListOsNetworksResponse struct {
 }
 
 type NetworkData struct {
-	EndIP   string `json:"endip"`
-	Shared  string `json:"shared"`
+	EndIP string `json:"endip"`
+	// Shared  string `json:"shared"`
 	StartIP string `json:"startip"`
 	Type    string `json:"type"`
 	SSLVPN  string `json:"sslvpn"`

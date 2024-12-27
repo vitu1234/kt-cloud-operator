@@ -163,9 +163,11 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 					//we are done with the control plane
 
 				}
+				logger.Info("Skip adding public IP address to Machine already added")
+				return ctrl.Result{}, nil
 			}
-			logger.Info("Skip adding public IP address to Machine already added")
-
+			logger.Info("Machine is not yet ready, we have to reconcile")
+			return ctrl.Result{RequeueAfter: time.Minute}, nil
 		} else {
 			logger.Info("This is a worker machine")
 		}
