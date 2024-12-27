@@ -13,6 +13,7 @@ spec:
     cloudName: openstack
     name: edge01-cloud-config
   managedSecurityGroups:
+    enableOutboundInternetTraffic: true 
     controlPlaneRules:
       direction: ingress
       startPort: "1"

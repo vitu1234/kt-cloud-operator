@@ -53,8 +53,9 @@ type IdentityRef struct {
 
 // ManagedSecurityGroups contains security group rules for nodes
 type ManagedSecurityGroups struct {
-	ControlPlaneRules SecurityGroupRule `json:"controlPlaneRules,omitempty"`
-	WorkerRules       SecurityGroupRule `json:"workerRules,omitempty"`
+	EnableOutboundInternetTraffic bool              `json:"enableOutboundInternetTraffic,omitempty"`
+	ControlPlaneRules             SecurityGroupRule `json:"controlPlaneRules,omitempty"`
+	WorkerRules                   SecurityGroupRule `json:"workerRules,omitempty"`
 }
 
 // SecurityGroupRule represents individual security group rules

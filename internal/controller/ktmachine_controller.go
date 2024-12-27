@@ -153,7 +153,7 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 					if cluster.Spec.ManagedSecurityGroups.ControlPlaneRules.Direction != "" {
 
 						//rules to apply
-						err = httpapi.AddFirewallSettings(ktMachine, subjectToken, cluster.Spec.ManagedSecurityGroups.ControlPlaneRules)
+						err = httpapi.AddFirewallSettings(ktMachine, subjectToken, cluster.Spec.ManagedSecurityGroups.ControlPlaneRules, cluster.Spec.ManagedSecurityGroups.EnableOutboundInternetTraffic)
 						if err != nil {
 							logger.Error(err, "Failed to add firewall settings for the cluster")
 							return ctrl.Result{RequeueAfter: time.Minute}, nil
@@ -167,7 +167,7 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 				return ctrl.Result{}, nil
 			}
 			logger.Info("Machine is not yet ready, we have to reconcile")
-			return ctrl.Result{RequeueAfter: time.Minute}, nil
+			return ctrl.Result{RequeueAfter: time.Minute / 2}, nil
 		} else {
 			logger.Info("This is a worker machine")
 		}

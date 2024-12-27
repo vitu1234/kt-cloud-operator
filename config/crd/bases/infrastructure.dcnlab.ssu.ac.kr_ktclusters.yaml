@@ -79,6 +79,8 @@ spec:
                       startPort:
                         type: string
                     type: object
+                  enableOutboundInternetTraffic:
+                    type: boolean
                   workerRules:
                     description: SecurityGroupRule represents individual security
                       group rules

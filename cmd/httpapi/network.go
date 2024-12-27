@@ -587,7 +587,7 @@ func GetListVpcNetworks(token string) ([]NetworkData, error) {
 }
 
 // add firewall settings
-func AddFirewallSettings(machine *v1beta1.KTMachine, token string, securityGroupRules v1beta1.SecurityGroupRule) error {
+func AddFirewallSettings(machine *v1beta1.KTMachine, token string, securityGroupRules v1beta1.SecurityGroupRule, enableOutboundInternetTraffic bool) error {
 
 	publicIPs, err := GetAssignedPublicIpAddresses(token)
 
@@ -613,6 +613,10 @@ func AddFirewallSettings(machine *v1beta1.KTMachine, token string, securityGroup
 	var dstnetworkid string
 	var srcnetworkid string
 
+	//for enabling outbound internet traffic
+	var from_internet string
+	var from_internal string
+
 	for i := 0; i < len(publicIPs.PublicIps); i++ {
 		if len(publicIPs.PublicIps[i].VirtualIps) > 0 {
 			for y := 0; y < len(publicIPs.PublicIps[i].VirtualIps); y++ {
@@ -624,6 +628,11 @@ func AddFirewallSettings(machine *v1beta1.KTMachine, token string, securityGroup
 							for i := 0; i < len(vpcNetworks); i++ {
 								if vpcNetworks[i].Type == "PUBLIC" {
 									srcnetworkid = vpcNetworks[i].ID
+									if enableOutboundInternetTraffic {
+										from_internal = dstnetworkid
+										from_internet = srcnetworkid
+									}
+
 								}
 							}
 						} else {
@@ -631,6 +640,9 @@ func AddFirewallSettings(machine *v1beta1.KTMachine, token string, securityGroup
 							for i := 0; i < len(vpcNetworks); i++ {
 								if vpcNetworks[i].Type == "PUBLIC" {
 									dstnetworkid = vpcNetworks[i].ID
+
+									// from_internal = dstnetworkid
+									// from_internet = srcnetworkid
 								}
 							}
 						}
@@ -711,6 +723,57 @@ func AddFirewallSettings(machine *v1beta1.KTMachine, token string, securityGroup
 
 		if serverResponse.NcCreateFirewallRuleResponse.DisplayText != "" {
 			return errors.New(serverResponse.NcCreateFirewallRuleResponse.DisplayText)
+		}
+
+		//add internet facing rules
+		if enableOutboundInternetTraffic && from_internet != "" && from_internal != "" {
+			firewallSettingsRequest := PostPayloadFirewallSettings{
+				StartPort:    securityGroupRules.StartPort,
+				EndPort:      securityGroupRules.EndPort,
+				Action:       securityGroupRules.Action,
+				Protocol:     securityGroupRules.Protocol,
+				DstIp:        securityGroupRules.Dstip,
+				VirtualIPId:  virtualipid,
+				SrcNetworkId: from_internal,
+				DstNetworkId: from_internet,
+			}
+
+			// Marshal the struct to JSON
+			payload, err := json.Marshal(firewallSettingsRequest)
+			if err != nil {
+				fmt.Println("Error marshalling JSON:", err)
+				return err
+			}
+
+			logger1.Info("PAYLOAD FOR INTERNET")
+			logger1.Info(payload)
+			logger1.Info("----------------------------")
+
+			// Define the endpoint URL
+			apiURL := Config.ApiBaseURL + Config.Zone + "/nc/Firewall"
+
+			// Set up HTTP client with timeout
+			// Set up the HTTP client
+			client := &http.Client{Timeout: 10 * time.Second}
+
+			// Create a new HTTP POST request
+			req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(payload))
+			if err != nil {
+				logger1.Error("Error creating request:", err)
+				return err
+			}
+
+			// Add headers
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("X-Auth-Token", token) // Replace with your actual token
+
+			// Send the request
+			resp, err := client.Do(req)
+			if err != nil {
+				logger1.Error("Error sending request:", err)
+				return err
+			}
+			defer resp.Body.Close()
 		}
 
 		logger1.Info("Added firewall settings to the cluster ")
