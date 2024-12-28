@@ -6,6 +6,7 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: edge01-control-plane
 spec:
+  type: control-plane
   replicas: 1
   selector:
     matchLabels: null
@@ -19,7 +20,7 @@ spec:
       clusterName: openstack-nephio
       failureDomain: DX-G
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-        kind: OpenStackMachineTemplate
-        name: openstack-nephio-md-0
+        apiVersion: infrastructure.dcnlab.ssu.ac.kr/v1beta1
+        kind: KTCluster
+        name: edge01
       version: v1.30.0

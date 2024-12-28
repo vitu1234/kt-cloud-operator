@@ -37,6 +37,7 @@ type KTMachineSpec struct {
 	Ports              []Port               `json:"ports,omitempty"`
 	AvailabilityZone   string               `json:"availabilityZone,omitempty"`
 	UserData           string               `json:"userData,omitempty"`
+	ControlPlaneNumber int                  `json:"controlPlaneNumber,omitempty"` //if machine is controlPlane we have to identify how many there are in order to join some controlPlanes to existing ones. Number 1 is the main and first one
 }
 
 type Networks struct {
@@ -96,6 +97,15 @@ type KTMachineStatus struct {
 	Status            string               `json:"status,omitempty"`
 	TerminatedAt      *string              `json:"OS-SRV-USG:terminated_at,omitempty"`
 	ConfigDrive       string               `json:"config_drive,omitempty"`
+
+	//added by control-plane node to allow worker nodes to check for respective CP
+	ControlPlaneRef ControlPlaneRef `json:"controlPlaneRef,omitempty"`
+}
+
+type ControlPlaneRef struct {
+	Type                string `json:"type,omitempty"`
+	LastTransactionTime string `json:"lastTransactionTime,omitempty"`
+	Status              bool   `json:"status,omitempty"`
 }
 
 // Supporting structs

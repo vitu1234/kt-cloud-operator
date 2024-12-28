@@ -1,0 +1,23 @@
+# permissions for end users to view clustercontrolplanedeployments.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: kt-cloud-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: clustercontrolplanedeployment-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - clustercontrolplanedeployments
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - clustercontrolplanedeployments/status
+  verbs:
+  - get

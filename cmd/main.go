@@ -215,6 +215,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "KTNetworkFirewall")
 		os.Exit(1)
 	}
+
 	// +kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

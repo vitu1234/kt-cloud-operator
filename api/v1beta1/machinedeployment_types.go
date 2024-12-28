@@ -31,6 +31,7 @@ type MachineDeploymentSpec struct {
 	// Foo is an example field of MachineDeployment. Edit machinedeployment_types.go to remove/update
 	// ClusterName string      `json:"clusterName"`
 	Replicas int         `json:"replicas"`
+	Type     string      `json:"type"` //control-plane or worker
 	Selector Selector    `json:"selector,omitempty"`
 	Template MachineSpec `json:"template,omitempty"`
 }

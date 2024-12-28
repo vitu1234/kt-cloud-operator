@@ -1,0 +1,27 @@
+# permissions for end users to edit clustercontrolplanedeployments.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: kt-cloud-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: clustercontrolplanedeployment-editor-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - clustercontrolplanedeployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - clustercontrolplanedeployments/status
+  verbs:
+  - get
