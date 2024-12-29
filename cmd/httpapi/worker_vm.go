@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -23,6 +24,11 @@ func JoinControlPlane(ktMachineControlPlaneList []v1beta1.KTMachine, ktMachine v
 			break
 		}
 		logger1.Info("Control Plane not ready yet for " + ktMachineControlPlaneList[i].Name + ", checking another control-plane machine")
+	}
+
+	if len(ktMachineControlPlaneList) == 0 {
+		logger1.Info("ready and boostrapped control plane list is zero")
+		return errors.New("ready and boostrapped control plane list is zero")
 	}
 
 	// we have to join the control plane
