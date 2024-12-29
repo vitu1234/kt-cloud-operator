@@ -18,7 +18,6 @@ package controller
 
 import (
 	"context"
-	"strconv"
 	"strings"
 	"time"
 
@@ -111,8 +110,6 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	} else if strings.Contains(machineName, substring) {
 		logger.Info("Machine already created and has ID")
 		//call API and check if machine is ready
-		// if ktMachine.Status.Status == "Creating" {
-		// if ktMachine.Status.Status == "Creating" {
 		serverResponse, err := httpapi.GetCreatedVM(ktMachine, subjectToken)
 		if err != nil || serverResponse == nil {
 			logger.Error(err, "Failed to query VM on KT Cloud during API Call")
@@ -236,6 +233,27 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		}
 		logger.Info("Worker machine already initialized on cloud, we have to get the cloud status and update status on the local resource")
 		// return ctrl.Result{RequeueAfter: time.Hour}, nil
+		logger.Info("Worker Machine already created and has ID")
+		//call API and check if machine is ready
+		serverResponse, err := httpapi.GetCreatedVM(ktMachine, subjectToken)
+		if err != nil || serverResponse == nil {
+			logger.Error(err, "Failed to query worker VM on KT Cloud during API Call")
+			return ctrl.Result{RequeueAfter: time.Minute}, nil
+		}
+
+		if !ktMachine.Status.WorkerRef.JoinedControlPlane {
+			ktMachine.Status.WorkerRef.JoinedControlPlane = true
+		}
+
+		logger.Info("Got the machine we have to update if the states dont match")
+		if ktMachine.Status.Status != serverResponse.Status {
+			ktMachine.Status = *serverResponse
+			if err := r.Status().Update(ctx, ktMachine); err != nil {
+				logger.Error(err, "Can't update for machine with status on cloud")
+				return ctrl.Result{RequeueAfter: time.Minute}, nil
+			}
+
+		}
 	}
 
 	//WORKER NODE CODE
@@ -348,15 +366,10 @@ func (r *KTMachineReconciler) GetBootstrapReadyMachineControlPlane(ctx context.C
 	var controlPlaneClusterMachines []v1beta1.KTMachine
 
 	for _, machine := range ktMachineList.Items {
-		logger.Info("+++++++++++++++++++++++++++++++++++++++")
 		if machine.Name != ktMachine.Name && strings.Contains(machine.Name, substring) && machine.Status.Status == "ACTIVE" && machine.Status.ControlPlaneRef.Type == "BootstrapReady" && machine.Status.ControlPlaneRef.Status {
 			controlPlaneClusterMachines = append(controlPlaneClusterMachines, machine)
 		}
 	}
-
-	logger.Info("===============================================")
-	logger.Info("Length CP: " + strconv.Itoa(len(controlPlaneClusterMachines)))
-
 	return controlPlaneClusterMachines, nil
 }
 
