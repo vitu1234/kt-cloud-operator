@@ -12,7 +12,6 @@ resources:
 - bases/infrastructure.dcnlab.ssu.ac.kr_ktmachines.yaml
 - bases/infrastructure.dcnlab.ssu.ac.kr_ktpublicnetworks.yaml
 - bases/infrastructure.dcnlab.ssu.ac.kr_ktnetworkfirewalls.yaml
-- bases/infrastructure.dcnlab.ssu.ac.kr_clustercontrolplanedeployments.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patches:

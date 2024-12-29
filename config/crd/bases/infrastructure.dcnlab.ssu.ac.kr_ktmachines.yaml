@@ -56,9 +56,13 @@ spec:
                       type: integer
                   type: object
                 type: array
-              flavor:
+              clusterName:
                 description: Foo is an example field of KTMachine. Edit ktmachine_types.go
                   to remove/update
+                type: string
+              controlPlaneNumber:
+                type: integer
+              flavor:
                 type: string
               networkTier:
                 items:
@@ -170,6 +174,17 @@ spec:
                 type: string
               config_drive:
                 type: string
+              controlPlaneRef:
+                description: added by control-plane node to allow worker nodes to
+                  check for respective CP
+                properties:
+                  lastTransactionTime:
+                    type: string
+                  status:
+                    type: boolean
+                  type:
+                    type: string
+                type: object
               created:
                 type: string
               description:

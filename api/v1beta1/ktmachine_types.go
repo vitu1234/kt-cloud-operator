@@ -29,6 +29,7 @@ type KTMachineSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of KTMachine. Edit ktmachine_types.go to remove/update
+	ClusterName        string               `json:"clusterName,omitempty"`
 	Flavor             string               `json:"flavor,omitempty"`
 	SSHKeyName         string               `json:"sshKeyName,omitempty"`
 	BlockDeviceMapping []BlockDeviceMapping `json:"blockDeviceMapping,omitempty"`
@@ -100,6 +101,12 @@ type KTMachineStatus struct {
 
 	//added by control-plane node to allow worker nodes to check for respective CP
 	ControlPlaneRef ControlPlaneRef `json:"controlPlaneRef,omitempty"`
+
+	//this is for worker nodes to make sure it joined its respective cluster
+	WorkerRef WorkerRef `json:"workerRef,omitempty"`
+}
+type WorkerRef struct {
+	JoinedControlPlane bool `json:"joinedControlPlane,omitempty"`
 }
 
 type ControlPlaneRef struct {

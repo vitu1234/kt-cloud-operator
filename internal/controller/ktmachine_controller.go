@@ -162,12 +162,30 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 					}
 
 					//we are done with the control plane
+					ktMachine.Status.ControlPlaneRef.Type = "BootstrapReady"
+					ktMachine.Status.ControlPlaneRef.Status = false
+					if err := r.Status().Update(ctx, ktMachine); err != nil {
+						logger.Error(err, "Can't update for bootstrap ready control-plane to be false")
+						return ctrl.Result{RequeueAfter: time.Minute / 2}, nil
+					}
 
 				}
 				logger.Info("Skip adding public IP address to Machine already added")
 				//check controlPlane state
 				if ktMachine.Status.ControlPlaneRef.Type == "BootstrapReady" && !ktMachine.Status.ControlPlaneRef.Status {
 					// try to curl the API server if it is ready for join
+					if err := httpapi.CheckControlPlaneMachineReady(ktMachine); err != nil {
+						logger.Error(err, "Control Plane not ready yet")
+						return ctrl.Result{RequeueAfter: time.Minute / 2}, nil
+					}
+
+					ktMachine.Status.ControlPlaneRef.Type = "BootstrapReady"
+					ktMachine.Status.ControlPlaneRef.Status = true
+					if err := r.Status().Update(ctx, ktMachine); err != nil {
+						logger.Error(err, "Can't update for bootstrap ready control-plane")
+						return ctrl.Result{RequeueAfter: time.Minute / 2}, nil
+					}
+
 				}
 				return ctrl.Result{}, nil
 			}
@@ -177,6 +195,21 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			logger.Info("This is a worker machine")
 			// we have to get one control-plane machine associated with the cluster
 			//check if control machine is ready and join
+			if !ktMachine.Status.WorkerRef.JoinedControlPlane {
+				//available ready controlPlanes
+				controlPlanesBootstrap, err := r.GetBootstrapReadyMachineControlPlane(ctx, ktMachine, cluster, req)
+				if err != nil {
+					logger.Error(err, "failed to list bootstrap ready control-planes")
+					return ctrl.Result{RequeueAfter: time.Minute}, nil
+				}
+				if len(controlPlanesBootstrap) == 0 {
+					logger.Error(errors.New("no ready available bootstrapped control planes"), "reconciling to check again...")
+					return ctrl.Result{RequeueAfter: time.Minute}, nil
+				}
+
+			}
+
+			logger.Info("Already joined control plane")
 
 		}
 
@@ -276,64 +309,28 @@ func (r *KTMachineReconciler) GetMachineAssociatedCluster(ctx context.Context, k
 	return nil, nil
 }
 
-func (r *KTMachineReconciler) GetReadyMachineControlPlane(ctx context.Context, ktMachine *infrastructurev1beta1.KTMachine, associatedCluster *v1beta1.KTCluster, req ctrl.Request) (*v1beta1.KTMachine, error) {
+func (r *KTMachineReconciler) GetBootstrapReadyMachineControlPlane(ctx context.Context, ktMachine *infrastructurev1beta1.KTMachine, associatedCluster *v1beta1.KTCluster, req ctrl.Request) ([]v1beta1.KTMachine, error) {
 	logger := log.FromContext(ctx, "LogFrom", "Machine")
 
-	ktMachineDeploymentList := &v1beta1.MachineDeploymentList{}
-	err := r.List(ctx, ktMachineDeploymentList, client.InNamespace(ktMachine.Namespace))
+	ktMachineList := &v1beta1.KTMachineList{}
+	err := r.List(ctx, ktMachineList, client.InNamespace(ktMachine.Namespace))
 	if err != nil {
-		logger.Error(err, "failed to list MachineDeployments for this machine")
+		logger.Error(err, "failed to list machines in same namespace as this worker")
 		return nil, err
 	}
 
-	// Filter by ownerReferences
-	var ownerMachineDeployment v1beta1.MachineDeployment
-	for _, machineDeployment := range ktMachineDeploymentList.Items {
-		for _, ref := range ktMachine.OwnerReferences {
-			if ref.UID == machineDeployment.UID {
-				ownerMachineDeployment = machineDeployment
-				logger.Info("Found owned MachineDeployment", "name", machineDeployment.Name)
-				break
-			}
+	substring := "control-plane" // control-planes name have this string in their names
+
+	// We just want to get ready bootstrap control planes
+	var controlPlaneClusterMachines []v1beta1.KTMachine
+
+	for _, machine := range ktMachineList.Items {
+		if machine.Name != ktMachine.Name && strings.Contains(machine.Name, substring) && machine.Status.Status == "ACTIVE" && machine.Status.ControlPlaneRef.Type == "BootstrapReady" && machine.Status.ControlPlaneRef.Status {
+			controlPlaneClusterMachines = append(controlPlaneClusterMachines, machine)
 		}
 	}
 
-	// we found matching machine deployment owner
-	// we have to find the cluster from this
-	// KTMachineTemplate is owned by KTCluster and KTMachineTemplate.Name = MachineDeployment.Name, KTMachineTemplate.NameSpace = MachineDeployment.NameSpace
-	// therefore, use MachineDeployment to MachineTemplate to find Cluster then token for the cluster
-	if ownerMachineDeployment.UID != "" {
-		ktMachineTemplate := &v1beta1.KTMachineTemplate{}
-		err := r.Get(ctx, types.NamespacedName{Name: ownerMachineDeployment.Name, Namespace: ownerMachineDeployment.Namespace}, ktMachineTemplate)
-
-		if err != nil {
-			if apierrors.IsNotFound(err) {
-				logger.Error(err, "KTMachineTemplate not found no need to proceed for finding SubjectToken To Auth API", "Name", ownerMachineDeployment.Name, "Namespace", ownerMachineDeployment.Namespace)
-				return nil, err
-			}
-			return nil, err
-		}
-
-		var clusterName string
-
-		for _, ref := range ktMachineTemplate.OwnerReferences {
-			if ref.Kind == "KTCluster" {
-				clusterName = ref.Name
-				break
-
-			}
-		}
-
-		ktCluster := &v1beta1.KTCluster{}
-		err = r.Get(ctx, types.NamespacedName{Name: clusterName, Namespace: ktMachine.Namespace}, ktCluster)
-		if err != nil {
-			return nil, err
-		}
-
-		return nil, err
-	}
-
-	return nil, nil
+	return controlPlaneClusterMachines, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

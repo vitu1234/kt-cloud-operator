@@ -128,6 +128,7 @@ func (r *MachineDeploymentReconciler) ktMachineForMachineDeployment(ctx context.
 			Spec: v1beta1.KTMachineSpec{
 				ControlPlaneNumber: i + 1,
 				Flavor:             foundKTMachineTemplate.Spec.Template.Spec.Flavor,
+				ClusterName:        machineDeployment.Spec.Template.Spec.ClusterName,
 				AvailabilityZone:   machineDeployment.Spec.Template.Spec.FailureDomain,
 				SSHKeyName:         foundKTMachineTemplate.Spec.Template.Spec.SSHKeyName,
 				BlockDeviceMapping: foundKTMachineTemplate.Spec.Template.Spec.BlockDeviceMapping,
