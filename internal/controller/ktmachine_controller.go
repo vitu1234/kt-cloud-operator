@@ -197,19 +197,32 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			//check if control machine is ready and join
 			if !ktMachine.Status.WorkerRef.JoinedControlPlane {
 				//available ready controlPlanes
-				controlPlanesBootstrap, err := r.GetBootstrapReadyMachineControlPlane(ctx, ktMachine, cluster, req)
+				controlPlanesBootstrapList, err := r.GetBootstrapReadyMachineControlPlane(ctx, ktMachine, cluster, req)
 				if err != nil {
 					logger.Error(err, "failed to list bootstrap ready control-planes")
 					return ctrl.Result{RequeueAfter: time.Minute}, nil
 				}
-				if len(controlPlanesBootstrap) == 0 {
+				if len(controlPlanesBootstrapList) == 0 {
 					logger.Error(errors.New("no ready available bootstrapped control planes"), "reconciling to check again...")
 					return ctrl.Result{RequeueAfter: time.Minute}, nil
 				}
 
+				err = httpapi.JoinControlPlane(controlPlanesBootstrapList, *ktMachine, subjectToken)
+				if err != nil {
+					logger.Error(err, "worker machine failed joining control-plane")
+					return ctrl.Result{RequeueAfter: time.Minute}, nil
+				}
+
+				//if assumed to have joined, we have to update the status of this machine
+				ktMachine.Status.WorkerRef.JoinedControlPlane = true
+				if err := r.Status().Update(ctx, ktMachine); err != nil {
+					logger.Error(err, "Can't update status of machine to have joined cluster")
+					return ctrl.Result{RequeueAfter: time.Minute / 2}, nil
+				}
+
 			}
 
-			logger.Info("Already joined control plane")
+			logger.Info("Machine Already joined control plane, nothing to do here")
 
 		}
 
