@@ -18,3 +18,24 @@ spec:
       networkTier:
         - id: 7031a1e3-7435-4cd2-9087-671a995f3bbd
       sshKeyName: test1
+---
+apiVersion: infrastructure.dcnlab.ssu.ac.kr/v1beta1
+kind: KTMachineTemplate
+metadata:
+  labels:
+    app.kubernetes.io/name: kt-cloud-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: edge01-md-0
+spec:
+  template:
+    spec:
+      flavor: 704ee1ca-4720-4f6a-b05a-669060940186
+      blockDeviceMapping:
+        - id: ece8ab48-0752-4de0-bf93-f189c60946de
+          bootIndex: 0
+          sourceType: image
+          volumeSize: 50
+          destinationType: volume
+      networkTier:
+        - id: 7031a1e3-7435-4cd2-9087-671a995f3bbd
+      sshKeyName: test1

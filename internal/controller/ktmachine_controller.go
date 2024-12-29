@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"strconv"
 	"strings"
 	"time"
 
@@ -80,8 +81,23 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{RequeueAfter: time.Minute}, nil
 	}
 
+	// check if current machine is control plane
+	machineName := ktMachine.Name
+	substring := "control-plane"
+
+	cluster, err := r.GetMachineAssociatedCluster(ctx, ktMachine, req)
+	if cluster == nil || err != nil {
+		if cluster == nil {
+			logger.Error(errors.New("cluster empty from get-associated-cluster for machine"), "Failed to retrieve cluster for Machine")
+			return ctrl.Result{RequeueAfter: time.Minute}, nil
+		} else if err != nil {
+			logger.Error(err, "Failed to retrieve cluster for Machine")
+			return ctrl.Result{RequeueAfter: time.Minute}, nil
+		}
+	}
+
 	//trigger to create machine on KTCloud by calling API
-	if ktMachine.Status.ID == "" {
+	if ktMachine.Status.ID == "" && strings.Contains(machineName, substring) {
 		logger.Info("Machine has no ID in the status field, create it on KT Cloud")
 
 		err = httpapi.CreateVM(ktMachine, subjectToken)
@@ -92,7 +108,7 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 		//use the response to from the api and update the machine
 		return ctrl.Result{RequeueAfter: time.Minute}, nil
-	} else {
+	} else if strings.Contains(machineName, substring) {
 		logger.Info("Machine already created and has ID")
 		//call API and check if machine is ready
 		// if ktMachine.Status.Status == "Creating" {
@@ -122,23 +138,10 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		//if we already kubeadm data, join worker nodes if not joined
 
 		//we have to attach public IP to all control planes
-		// check if current machine is control plane
-		machineName := ktMachine.Name
-		substring := "control-plane"
 
 		if strings.Contains(machineName, substring) {
 			logger.Info("The machine name contains 'control-plane', therefore Control Plane.")
 			//attach public IP
-			cluster, err := r.GetMachineAssociatedCluster(ctx, ktMachine, req)
-			if cluster == nil || err != nil {
-				if cluster == nil {
-					logger.Error(errors.New("cluster empty from get-associated-cluster for machine"), "Failed to retrieve cluster for Machine")
-					return ctrl.Result{RequeueAfter: time.Minute}, nil
-				} else if err != nil {
-					logger.Error(err, "Failed to retrieve cluster for Machine")
-					return ctrl.Result{RequeueAfter: time.Minute}, nil
-				}
-			}
 
 			//CHECK NETWORK STUFF ONLY IF THE MACHINE STATUS IS ACTIVE
 			if ktMachine.Status.Status == "ACTIVE" {
@@ -161,21 +164,82 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 					}
 
 					//we are done with the control plane
+					ktMachine.Status.ControlPlaneRef.Type = "BootstrapReady"
+					ktMachine.Status.ControlPlaneRef.Status = false
+					if err := r.Status().Update(ctx, ktMachine); err != nil {
+						logger.Error(err, "Can't update for bootstrap ready control-plane to be false")
+						return ctrl.Result{RequeueAfter: time.Minute / 2}, nil
+					}
 
 				}
 				logger.Info("Skip adding public IP address to Machine already added")
+				//check controlPlane state
+				if ktMachine.Status.ControlPlaneRef.Type == "BootstrapReady" && !ktMachine.Status.ControlPlaneRef.Status {
+					// try to curl the API server if it is ready for join
+					if err := httpapi.CheckControlPlaneMachineReady(ktMachine); err != nil {
+						logger.Error(err, "Control Plane not ready yet")
+						return ctrl.Result{RequeueAfter: time.Minute / 2}, nil
+					}
+
+					ktMachine.Status.ControlPlaneRef.Type = "BootstrapReady"
+					ktMachine.Status.ControlPlaneRef.Status = true
+					if err := r.Status().Update(ctx, ktMachine); err != nil {
+						logger.Error(err, "Can't update for bootstrap ready control-plane")
+						return ctrl.Result{RequeueAfter: time.Minute / 2}, nil
+					}
+
+				}
 				return ctrl.Result{}, nil
 			}
 			logger.Info("Machine is not yet ready, we have to reconcile")
 			return ctrl.Result{RequeueAfter: time.Minute / 2}, nil
 		} else {
-			logger.Info("This is a worker machine")
+			logger.Info("This is a worker machine, something wrong with configurations")
+			//trigger to create machine on KTCloud by calling API
+
 		}
 
 		return ctrl.Result{RequeueAfter: time.Hour / 2}, nil
+	} else {
+		if ktMachine.Status.Status == "" {
+			// we have to get one control-plane machine associated with the cluster
+			//check if control machine is ready and join
+			if !ktMachine.Status.WorkerRef.JoinedControlPlane {
+				//available ready controlPlanes
+				controlPlanesBootstrapList, err := r.GetBootstrapReadyMachineControlPlane(ctx, ktMachine, cluster, req)
+				if err != nil {
+					logger.Error(err, "failed to list bootstrap ready control-planes")
+					return ctrl.Result{RequeueAfter: time.Minute}, nil
+				}
+				if len(controlPlanesBootstrapList) == 0 {
+					logger.Error(errors.New("no ready available bootstrapped control planes"), "reconciling to check again...")
+					return ctrl.Result{RequeueAfter: time.Minute}, nil
+				}
+
+				err = httpapi.JoinControlPlane(controlPlanesBootstrapList, *ktMachine, subjectToken)
+				if err != nil {
+					logger.Error(err, "worker machine failed joining control-plane")
+					return ctrl.Result{RequeueAfter: time.Minute}, nil
+				}
+
+				//if assumed to have joined, we have to update the status of this machine
+				ktMachine.Status.WorkerRef.JoinedControlPlane = true
+				if err := r.Status().Update(ctx, ktMachine); err != nil {
+					logger.Error(err, "Can't update status of machine to have joined cluster")
+					return ctrl.Result{RequeueAfter: time.Minute / 2}, nil
+				}
+
+			}
+
+			logger.Info("Machine Already joined control plane, nothing to do here, we have to check the machine again and update status")
+			return ctrl.Result{RequeueAfter: time.Minute}, nil
+		}
+		logger.Info("Worker machine already initialized on cloud, we have to get the cloud status and update status on the local resource")
+		// return ctrl.Result{RequeueAfter: time.Hour}, nil
 	}
 
-	// return ctrl.Result{RequeueAfter: time.Hour}, nil
+	//WORKER NODE CODE
+	return ctrl.Result{RequeueAfter: time.Hour}, nil
 }
 
 func (r *KTMachineReconciler) getSubjectToken(ctx context.Context, ktMachine *infrastructurev1beta1.KTMachine, req ctrl.Request) (string, error) {
@@ -266,6 +330,34 @@ func (r *KTMachineReconciler) GetMachineAssociatedCluster(ctx context.Context, k
 	}
 
 	return nil, nil
+}
+
+func (r *KTMachineReconciler) GetBootstrapReadyMachineControlPlane(ctx context.Context, ktMachine *infrastructurev1beta1.KTMachine, associatedCluster *v1beta1.KTCluster, req ctrl.Request) ([]v1beta1.KTMachine, error) {
+	logger := log.FromContext(ctx, "LogFrom", "Machine")
+
+	ktMachineList := &v1beta1.KTMachineList{}
+	err := r.List(ctx, ktMachineList, client.InNamespace(ktMachine.Namespace))
+	if err != nil {
+		logger.Error(err, "failed to list machines in same namespace as this worker")
+		return nil, err
+	}
+
+	substring := "control-plane" // control-planes name have this string in their names
+
+	// We just want to get ready bootstrap control planes
+	var controlPlaneClusterMachines []v1beta1.KTMachine
+
+	for _, machine := range ktMachineList.Items {
+		logger.Info("+++++++++++++++++++++++++++++++++++++++")
+		if machine.Name != ktMachine.Name && strings.Contains(machine.Name, substring) && machine.Status.Status == "ACTIVE" && machine.Status.ControlPlaneRef.Type == "BootstrapReady" && machine.Status.ControlPlaneRef.Status {
+			controlPlaneClusterMachines = append(controlPlaneClusterMachines, machine)
+		}
+	}
+
+	logger.Info("===============================================")
+	logger.Info("Length CP: " + strconv.Itoa(len(controlPlaneClusterMachines)))
+
+	return controlPlaneClusterMachines, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

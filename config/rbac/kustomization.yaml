@@ -22,6 +22,8 @@ resources:
 # default, aiding admins in cluster management. Those roles are
 # not used by the Project itself. You can comment the following lines
 # if you do not want those helpers be installed with your Project.
+- clustercontrolplanedeployment_editor_role.yaml
+- clustercontrolplanedeployment_viewer_role.yaml
 - ktnetworkfirewall_editor_role.yaml
 - ktnetworkfirewall_viewer_role.yaml
 - ktpublicnetwork_editor_role.yaml

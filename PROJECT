@@ -98,4 +98,13 @@ resources:
   kind: KTNetworkFirewall
   path: dcnlab.ssu.ac.kr/kt-cloud-operator/api/v1beta1
   version: v1beta1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: dcnlab.ssu.ac.kr
+  group: infrastructure
+  kind: ClusterControlPlaneDeployment
+  path: dcnlab.ssu.ac.kr/kt-cloud-operator/api/v1beta1
+  version: v1beta1
 version: "3"

@@ -6,6 +6,7 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: edge01-control-plane
 spec:
+  type: control-plane
   replicas: 1
   selector:
     matchLabels: null
@@ -16,10 +17,37 @@ spec:
           apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
           kind: KubeadmConfigTemplate
           name: openstack-nephio-md-0
-      clusterName: openstack-nephio
+      clusterName: edge01
       failureDomain: DX-G
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-        kind: OpenStackMachineTemplate
-        name: openstack-nephio-md-0
+        apiVersion: infrastructure.dcnlab.ssu.ac.kr/v1beta1
+        kind: KTCluster
+        name: edge01
+      version: v1.30.0
+---
+apiVersion: infrastructure.dcnlab.ssu.ac.kr/v1beta1
+kind: MachineDeployment
+metadata:
+  labels:
+    app.kubernetes.io/name: kt-cloud-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: edge01-md-0
+spec:
+  type: worker
+  replicas: 1
+  selector:
+    matchLabels: null
+  template:
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: openstack-nephio-md-0
+      clusterName: edge01
+      failureDomain: DX-G
+      infrastructureRef:
+        apiVersion: infrastructure.dcnlab.ssu.ac.kr/v1beta1
+        kind: KTCluster
+        name: edge01
       version: v1.30.0

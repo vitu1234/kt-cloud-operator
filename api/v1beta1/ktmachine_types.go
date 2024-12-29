@@ -29,6 +29,7 @@ type KTMachineSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of KTMachine. Edit ktmachine_types.go to remove/update
+	ClusterName        string               `json:"clusterName,omitempty"`
 	Flavor             string               `json:"flavor,omitempty"`
 	SSHKeyName         string               `json:"sshKeyName,omitempty"`
 	BlockDeviceMapping []BlockDeviceMapping `json:"blockDeviceMapping,omitempty"`
@@ -37,6 +38,7 @@ type KTMachineSpec struct {
 	Ports              []Port               `json:"ports,omitempty"`
 	AvailabilityZone   string               `json:"availabilityZone,omitempty"`
 	UserData           string               `json:"userData,omitempty"`
+	ControlPlaneNumber int                  `json:"controlPlaneNumber,omitempty"` //if machine is controlPlane we have to identify how many there are in order to join some controlPlanes to existing ones. Number 1 is the main and first one
 }
 
 type Networks struct {
@@ -96,6 +98,21 @@ type KTMachineStatus struct {
 	Status            string               `json:"status,omitempty"`
 	TerminatedAt      *string              `json:"OS-SRV-USG:terminated_at,omitempty"`
 	ConfigDrive       string               `json:"config_drive,omitempty"`
+
+	//added by control-plane node to allow worker nodes to check for respective CP
+	ControlPlaneRef ControlPlaneRef `json:"controlPlaneRef,omitempty"`
+
+	//this is for worker nodes to make sure it joined its respective cluster
+	WorkerRef WorkerRef `json:"workerRef,omitempty"`
+}
+type WorkerRef struct {
+	JoinedControlPlane bool `json:"joinedControlPlane,omitempty"`
+}
+
+type ControlPlaneRef struct {
+	Type                string `json:"type,omitempty"`
+	LastTransactionTime string `json:"lastTransactionTime,omitempty"`
+	Status              bool   `json:"status,omitempty"`
 }
 
 // Supporting structs
