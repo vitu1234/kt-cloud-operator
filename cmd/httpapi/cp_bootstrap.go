@@ -3,8 +3,6 @@ package httpapi
 import (
 	"bytes"
 	"errors"
-	"fmt"
-	"io"
 	"net/http"
 	"time"
 
@@ -38,16 +36,16 @@ func CheckControlPlaneMachineReady(machine *v1beta1.KTMachine) error {
 	defer resp.Body.Close()
 
 	// Handle the response
-	fmt.Println("Response Status:", resp.Status)
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		logger1.Error("Error reading response body:", err)
-		return err
-	}
+	// fmt.Println("Response Status:", resp.Status)
+	// _, err = io.ReadAll(resp.Body)
+	// if err != nil {
+	// 	logger1.Error("Error reading response body:", err)
+	// 	return err
+	// }
 
-	logger1.Info("-----------------------------------------")
-	logger1.Info("Response Body Networks:", string(body))
-	logger1.Info("********************************")
+	// logger1.Info("-----------------------------------------")
+	// logger1.Info("Response Body Networks:", string(body))
+	// logger1.Info("********************************")
 
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		logger1.Info("Api Server is ready!")

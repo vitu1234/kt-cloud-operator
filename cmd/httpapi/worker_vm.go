@@ -142,13 +142,13 @@ runcmd:
 	defer resp.Body.Close()
 
 	// Handle the response
-	fmt.Println("Response Status:", resp.Status)
+	// fmt.Println("Response Status:", resp.Status)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		logger1.Error("Error reading response body:", err)
 		return err
 	}
-	logger1.Info("Response Body:", string(body))
+	// logger1.Info("Response Body:", string(body))
 
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		logger1.Info("POST request successful and created worker machine!")
@@ -167,13 +167,13 @@ runcmd:
 		// fmt.Printf("Admin Password: %s\n", serverResponse.Server.AdminPass)
 		// fmt.Printf("Disk Config: %s\n", serverResponse.Server.DiskConfig)
 		// fmt.Println("Links:")
-		for _, link := range serverResponse.Server.Links {
-			fmt.Printf("  - Rel: %s, Href: %s\n", link.Rel, link.Href)
-		}
-		fmt.Println("Security Groups:")
-		for _, group := range serverResponse.Server.SecurityGroups {
-			fmt.Printf("  - Name: %s\n", group.Name)
-		}
+		// for _, link := range serverResponse.Server.Links {
+		// 	fmt.Printf("  - Rel: %s, Href: %s\n", link.Rel, link.Href)
+		// }
+		// fmt.Println("Security Groups:")
+		// for _, group := range serverResponse.Server.SecurityGroups {
+		// 	fmt.Printf("  - Name: %s\n", group.Name)
+		// }
 
 		// Update the machine K8s Resource
 		clientConfig, err := getRestConfig(Config.Kubeconfig)
