@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: edge01
 spec:
-  subjectToken: $token
+  subjectToken: gAAAAABnc71IXxhyijtKlhuWdMOuZMJyaeniJo7Et7JHAkrfqx83PKjlRMMddmfUgT8jplmiVtt8kk2LgO7qPkITfN9WfHwc4MadeY0HymiQGRao8vHWtUfS2HVK5kwsdD97RnY7AcXDqsmFb1QsllhEtOYrjBG6DW072_t59obVFvbHSP34jF8
   token:
     expiresAt: "2024-12-18T03:47:08.000000Z"
 
