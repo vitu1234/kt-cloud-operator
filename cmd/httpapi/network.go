@@ -806,7 +806,7 @@ func createFirewallObjectInK8s(machine *v1beta1.KTMachine, securityGroupRules v1
 	if err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			// Object does not exist, create it
-			logger1.Info("KTSubjectToken does not exist, creating a new one")
+			logger1.Info("Firewall does not exist, creating a new one")
 
 			firewall := &v1beta1.KTNetworkFirewall{
 				ObjectMeta: metav1.ObjectMeta{

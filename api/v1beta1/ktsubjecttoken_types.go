@@ -21,9 +21,9 @@ import (
 )
 
 const (
-	// KTMachineFinalizer allows ReconcileKTMachine to clean up resources associated with KTVM before
+	// KTSubjectTokenFinalizer allows ReconcileKTMachine to clean up resources associated with KTVM before
 	// removing it from the apiserver.
-	KTSubjectTokenFinalizer = "ktsubject.infrastructure.dcnlab.ssu.ac.kr"
+	KTSubjectTokenFinalizer = "ktsubjecttoken.infrastructure.dcnlab.ssu.ac.kr"
 )
 
 // KTSubjectTokenSpec defines the desired state of KTSubjectToken.

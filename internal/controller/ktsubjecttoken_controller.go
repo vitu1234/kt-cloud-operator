@@ -93,10 +93,10 @@ func (r *KTSubjectTokenReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			// 	return ctrl.Result{}, err
 			// }
 			// remove our finalizer from the list and update it.
-			controllerutil.RemoveFinalizer(ktSubjectToken, infrastructurev1beta1.KTSubjectTokenFinalizer)
-			if err := r.Update(ctx, ktSubjectToken); err != nil {
-				return ctrl.Result{}, err
-			}
+			// controllerutil.RemoveFinalizer(ktSubjectToken, infrastructurev1beta1.KTSubjectTokenFinalizer)
+			// if err := r.Update(ctx, ktSubjectToken); err != nil {
+			// 	return ctrl.Result{}, err
+			// }
 		}
 		// Stop reconciliation as the item is being deleted
 		return ctrl.Result{}, nil

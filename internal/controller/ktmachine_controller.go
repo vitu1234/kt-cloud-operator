@@ -88,6 +88,17 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{RequeueAfter: time.Minute}, nil
 	}
 
+	cluster, err := r.GetMachineAssociatedCluster(ctx, ktMachine, req)
+	if cluster == nil || err != nil {
+		if cluster == nil {
+			logger.Error(errors.New("cluster empty from get-associated-cluster for machine"), "Failed to retrieve cluster for Machine")
+			return ctrl.Result{}, err
+		} else if err != nil {
+			logger.Error(err, "Failed to retrieve cluster for Machine")
+			return ctrl.Result{}, err
+		}
+	}
+
 	// we have to add finalizers
 	if ktMachine.ObjectMeta.DeletionTimestamp.IsZero() {
 		// The object is not being deleted, so lets add our finalizer if not already added
@@ -118,6 +129,8 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 				return ctrl.Result{}, err
 			}
 			// remove our finalizer from the list and update it.
+			//remove finalizer from kt cluster
+
 			controllerutil.RemoveFinalizer(ktMachine, infrastructurev1beta1.KTMachineFinalizer)
 			if err := r.Update(ctx, ktMachine); err != nil {
 				return ctrl.Result{}, err
@@ -125,6 +138,11 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 			controllerutil.RemoveFinalizer(ktSubjectToken, infrastructurev1beta1.KTSubjectTokenFinalizer)
 			if err := r.Update(ctx, ktSubjectToken); err != nil {
+				return ctrl.Result{}, err
+			}
+
+			controllerutil.RemoveFinalizer(cluster, infrastructurev1beta1.KTClusterFinalizer)
+			if err := r.Update(ctx, cluster); err != nil {
 				return ctrl.Result{}, err
 			}
 		}
@@ -135,17 +153,6 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	// check if current machine is control plane
 	// machineName := ktMachine.Name
 	// substring := "control-plane"
-
-	cluster, err := r.GetMachineAssociatedCluster(ctx, ktMachine, req)
-	if cluster == nil || err != nil {
-		if cluster == nil {
-			logger.Error(errors.New("cluster empty from get-associated-cluster for machine"), "Failed to retrieve cluster for Machine")
-			return ctrl.Result{}, err
-		} else if err != nil {
-			logger.Error(err, "Failed to retrieve cluster for Machine")
-			return ctrl.Result{}, err
-		}
-	}
 
 	// Reconcile infrastructure state
 	if err := r.reconcileInfrastructure(ctx, ktMachine, cluster, subjectToken, req); err != nil {
@@ -165,7 +172,7 @@ func (r *KTMachineReconciler) getSubjectToken(ctx context.Context, ktMachine *in
 	cluster, err := r.GetMachineAssociatedCluster(ctx, ktMachine, req)
 	if cluster == nil || err != nil {
 		if cluster == nil {
-			return nil, errors.New("Failed to retrieve cluster for Machine")
+			return nil, errors.New("failed to retrieve cluster for machine")
 		} else if err != nil {
 			return nil, err
 		}
