@@ -105,6 +105,12 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			// we have to remove the finalizer and update the machine
 			// remove our finalizer from the list and update it.
 			// our finalizer is present, so lets handle any external dependency
+			//update the machine status to deleting
+			ktMachine.Status.Status = "DELETING"
+			if err := r.Status().Update(ctx, ktMachine); err != nil {
+				return ctrl.Result{}, err
+			}
+
 			if err := r.deleteExternalResources(ctx, ktMachine, subjectToken); err != nil {
 				// if fail to delete the external dependency here, return with error
 				// so that it can be retried.
