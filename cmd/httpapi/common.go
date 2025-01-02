@@ -181,6 +181,7 @@ func DeleteVMDependentResources(machine *v1beta1.KTMachine, token string) error 
 
 	err := DeleteFirewallSettings(machine, token)
 	if err != nil {
+		logger1.Error("Error deleting firewall settings:", err)
 		return err
 	}
 
@@ -239,7 +240,7 @@ func DeleteFirewallSettings(machine *v1beta1.KTMachine, token string) error {
 	}
 	err = k8sClient.Delete(ctx, existingFirewallSettings)
 	if err != nil {
-		logger1.Error("Error deleting firewall:", err)
+		logger1.Error("Error deleting firewall on cluster:", err)
 		return err
 	}
 	return nil
@@ -273,7 +274,7 @@ func DeleteFirewallOnCloud(jobId, token string) error {
 	defer resp.Body.Close()
 
 	// Handle the response
-	fmt.Println("Response Status:", resp.Status)
+	fmt.Println("DELETE FIREWALL Response Status:", resp.Status)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		logger1.Error("Error reading response body:", err)
@@ -297,8 +298,8 @@ func DeleteFirewallOnCloud(jobId, token string) error {
 		return nil
 
 	} else {
-		logger1.Error("GET request failed with status:", resp.Status)
-		return errors.New("GET request failed with status: " + resp.Status)
+		logger1.Error("delete request firewall failed with status:", resp.Status)
+		return errors.New("delete request firewall request failed with status: " + resp.Status)
 	}
 }
 
@@ -309,7 +310,7 @@ func DeleteStaticNatOnCloud(staticNatId, token string) any {
 	// Set up the HTTP client
 	client := &http.Client{Timeout: 10 * time.Second}
 
-	// Create a new HTTP GET request
+	// Create a new HTTP DELETE request
 	req, err := http.NewRequest("DELETE", apiURL, bytes.NewBuffer([]byte{}))
 	if err != nil {
 		logger1.Error("Error creating POST DELETION StaticNAT request:", err)
@@ -329,7 +330,7 @@ func DeleteStaticNatOnCloud(staticNatId, token string) any {
 	defer resp.Body.Close()
 
 	// Handle the response
-	fmt.Println("Response Status:", resp.Status)
+	fmt.Println("DELETE StaticNAT Response Status:", resp.Status)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		logger1.Error("Error reading response body:", err)
@@ -353,7 +354,7 @@ func DeleteStaticNatOnCloud(staticNatId, token string) any {
 		return nil
 
 	} else {
-		logger1.Error("GET request failed with status:", resp.Status)
-		return errors.New("GET request failed with status: " + resp.Status)
+		logger1.Error("DELETE static nat request failed with status:", resp.Status)
+		return errors.New("delete staticnat request failed with status: " + resp.Status)
 	}
 }

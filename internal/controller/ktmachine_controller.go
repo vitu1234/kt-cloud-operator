@@ -136,6 +136,14 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 				return ctrl.Result{}, err
 			}
 
+			//we have to trigger cluster deletion
+			//we have to trigger any ktcluster update
+			// Trigger KTClusterReconciler to reconcile the cluster
+			if err := r.triggerClusterReconciliation(ctx, cluster, req); err != nil {
+				logger.Error(err, "Failed to trigger KTCluster reconciliation")
+				return ctrl.Result{}, err
+			}
+
 			// controllerutil.RemoveFinalizer(ktSubjectToken, infrastructurev1beta1.KTSubjectTokenFinalizer)
 			// if err := r.Update(ctx, ktSubjectToken); err != nil {
 			// 	return ctrl.Result{}, err
@@ -163,6 +171,21 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	logger.Info("Successfully reconciled KTMachine", "machine", req.NamespacedName)
 
 	return ctrl.Result{RequeueAfter: time.Minute}, nil
+}
+
+func (r *KTMachineReconciler) triggerClusterReconciliation(ctx context.Context, cluster *infrastructurev1beta1.KTCluster, req ctrl.Request) error {
+	logger := log.FromContext(ctx, "LogFrom", "Machine")
+	if cluster.Annotations == nil {
+		cluster.Annotations = make(map[string]string)
+	}
+	cluster.Annotations["trigger-reconcile"] = time.Now().Format(time.RFC3339)
+
+	// Update the resource
+	if err := r.Update(ctx, cluster); err != nil {
+		logger.Error(err, "Failed to update KTCluster resource for triggering reconciliation on KTCluster")
+		return err
+	}
+	return nil
 }
 
 func (r *KTMachineReconciler) getSubjectToken(ctx context.Context, ktMachine *infrastructurev1beta1.KTMachine, req ctrl.Request) (*v1beta1.KTSubjectToken, error) {
