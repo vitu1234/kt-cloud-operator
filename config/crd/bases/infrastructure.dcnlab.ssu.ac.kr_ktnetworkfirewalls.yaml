@@ -39,36 +39,47 @@ spec:
           spec:
             description: KTNetworkFirewallSpec defines the desired state of KTNetworkFirewall.
             properties:
-              action:
-                type: integer
-              dstip:
-                type: string
-              dstnetworkid:
-                type: string
-              endport:
-                type: string
-              protocol:
-                type: integer
-              srcnetworkid:
-                type: string
-              startport:
+              firewallRules:
                 description: Foo is an example field of KTNetworkFirewall. Edit ktnetworkfirewall_types.go
                   to remove/update
-                type: string
-              virtualipid:
-                type: string
-            required:
-            - action
-            - dstip
-            - dstnetworkid
-            - endport
-            - protocol
-            - srcnetworkid
-            - startport
-            - virtualipid
+                items:
+                  properties:
+                    action:
+                      type: string
+                    dstip:
+                      type: string
+                    dstnetworkid:
+                      type: string
+                    endport:
+                      type: string
+                    protocol:
+                      type: string
+                    srcnetworkid:
+                      type: string
+                    startport:
+                      type: string
+                    virtualipid:
+                      type: string
+                  type: object
+                type: array
             type: object
           status:
             description: KTNetworkFirewallStatus defines the observed state of KTNetworkFirewall.
+            properties:
+              firewallJobs:
+                description: |-
+                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+                  Important: Run "make" to regenerate code after modifying this file
+                items:
+                  properties:
+                    createdAt:
+                      type: string
+                    jobId:
+                      type: string
+                    ruleId:
+                      type: string
+                  type: object
+                type: array
             type: object
         type: object
     served: true

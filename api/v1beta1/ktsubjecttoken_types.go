@@ -20,8 +20,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+const (
+	// KTSubjectTokenFinalizer allows ReconcileKTMachine to clean up resources associated with KTVM before
+	// removing it from the apiserver.
+	KTSubjectTokenFinalizer = "ktsubjecttoken.infrastructure.dcnlab.ssu.ac.kr"
+)
 
 // KTSubjectTokenSpec defines the desired state of KTSubjectToken.
 type KTSubjectTokenSpec struct {

@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,7 +13,10 @@ import (
 	// Meta API for object metadata
 
 	v1beta1 "dcnlab.ssu.ac.kr/kt-cloud-operator/api/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/pointer"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type PublicNetwork struct {
@@ -76,6 +80,7 @@ type NATAttachResponse struct {
 type NcEnableStaticNatResponse struct {
 	DisplayText string `json:"displaytext"`
 	Success     bool   `json:"success"`
+	Id          string `json:"id"`
 }
 
 // create firewall settings response
@@ -136,6 +141,23 @@ type Vpc struct {
 // list VPC response
 type NcListVPCResponse struct {
 	Networks []NetworkData `json:"networks"`
+}
+
+// Response for getting networking Job Ids
+type QueryAsyncJobResultResponse struct {
+	NcQueryAsyncJobResultResponse NcQueryAsyncJobResultResponse `json:"nc_queryasyncjobresultresponse"`
+}
+
+type NcQueryAsyncJobResultResponse struct {
+	Result Result `json:"result"`
+	// State  string `json:"state"`
+}
+
+type Result struct {
+	IPAddress   string `json:"ipaddress"`
+	DisplayText string `json:"displaytext"`
+	Success     bool   `json:"success"`
+	ID          string `json:"id"`
 }
 
 func AttachPublicIP(machine *v1beta1.KTMachine, token string) error {
@@ -266,8 +288,9 @@ func AttachPublicIP(machine *v1beta1.KTMachine, token string) error {
 		}
 		machineStatusCopy := machine.Status
 		assignedIp := v1beta1.AssignedPublicIps{
-			Id: publicIPs.PublicIps[0].Id,
-			IP: publicIPs.PublicIps[0].IP,
+			Id:          publicIPs.PublicIps[0].Id,
+			IP:          publicIPs.PublicIps[0].IP,
+			StaticNatId: serverResponse.NcEnableStaticNatResponse.Id,
 			PairedPvtNetwork: v1beta1.PairedPvtNetwork{
 				NetworkName: networkName,
 				NetworkID:   networkData.ID,
@@ -724,12 +747,224 @@ func AddFirewallSettings(machine *v1beta1.KTMachine, token string, securityGroup
 		if serverResponse.NcCreateFirewallRuleResponse.DisplayText != "" {
 			return errors.New(serverResponse.NcCreateFirewallRuleResponse.DisplayText)
 		}
+		logger1.Info("Add firewall settings to the cluster ")
 
-		logger1.Info("Added firewall settings to the cluster ")
+		groupRules := v1beta1.FirewallRules{
+			StartPort:    securityGroupRules.StartPort,
+			Protocol:     securityGroupRules.Protocol,
+			VirtualIPID:  virtualipid,
+			Action:       securityGroupRules.Action,
+			SrcNetworkID: srcnetworkid,
+			DstIP:        securityGroupRules.Dstip,
+			EndPort:      securityGroupRules.EndPort,
+			DstNetworkID: dstnetworkid,
+		}
+
+		logger1.Info("Firewall responce job id: ", serverResponse.NcCreateFirewallRuleResponse.JobId)
+
+		//get the firewall id and create a firewall object in k8s
+		rule_Id, err := GetNetworkingJobId(token, serverResponse.NcCreateFirewallRuleResponse.JobId, "Firewall_Create")
+		if err != nil {
+			logger1.Errorf("Failed to get job id: %v", err)
+			return err
+		}
+
+		if rule_Id == "" {
+			logger1.Errorf("Failed to get job id")
+			return errors.New("failed to get job id for firewall settings")
+		}
+
+		err = createFirewallObjectInK8s(machine, groupRules, serverResponse.NcCreateFirewallRuleResponse.JobId, rule_Id)
+		if err != nil {
+			logger1.Errorf("Failed to create firewall object in k8s: %v", err)
+			return err
+		}
+
 		return nil
 
 	} else {
 		logger1.Error("POST request failed with status:", resp.Status)
 		return errors.New("post request failed with status:" + resp.Status)
 	}
+}
+
+func createFirewallObjectInK8s(machine *v1beta1.KTMachine, securityGroupRules v1beta1.FirewallRules, s, rule_Id string) error {
+	// panic("unimplemented")
+
+	//check if the firewall object already exists
+	// if it exists, update the object
+	// if it does not exist, create the object
+	// if it exists and the job id is the same, do nothing
+	// if it exists and the job id is different, update the object
+	logger1.Info("Creating Firewall object in K8s with job id: ", s)
+
+	ctx := context.Background()
+	// Update the machine K8s Resource
+	clientConfig, err := getRestConfig(Config.Kubeconfig)
+	if err != nil {
+		logger1.Errorf("Cannot prepare k8s client config: %v. Kubeconfig was: %s", err, Config.Kubeconfig)
+		panic(err.Error())
+	}
+	// Set up a scheme (use runtime.Scheme from apimachinery)
+	scheme := runtime.NewScheme()
+	// Create Kubernetes client
+	k8sClient, err := getClient(clientConfig, scheme)
+	if err != nil {
+		logger1.Fatalf("Failed to create Kubernetes client: %v", err)
+		return err
+	}
+
+	// ktFirewallRules := v1beta1.FirewallRules{
+	// 	StartPort:    securityGroupRules.StartPort,
+	// 	Protocol:     securityGroupRules.Protocol,
+	// 	VirtualIPID:  securityGroupRules.VirtualIPID,
+	// 	Action:       securityGroupRules.Action,
+	// 	SrcNetworkID: securityGroupRules.SrcNetworkID,
+	// 	DstIP:        securityGroupRules.DstIP,
+	// 	EndPort:      securityGroupRules.EndPort,
+	// 	DstNetworkID: securityGroupRules.DstNetworkID,
+	// }
+
+	ktFirewallJobs := v1beta1.FirewallJobs{
+		JobId:     s,
+		RuleId:    rule_Id,
+		CreatedAt: time.Now().UTC().Format("2006-01-02T15:04:05.000000Z"),
+	}
+
+	existingFirewallObj := &v1beta1.KTNetworkFirewall{}
+	err = k8sClient.Get(ctx, client.ObjectKey{Name: machine.Name, Namespace: machine.Namespace}, existingFirewallObj)
+	if err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			// Object does not exist, create it
+			logger1.Info("Firewall does not exist, creating a new one")
+
+			firewall := &v1beta1.KTNetworkFirewall{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      machine.Name,
+					Namespace: machine.Namespace,
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							APIVersion:         machine.APIVersion,
+							Kind:               machine.Kind,
+							Name:               machine.Name,
+							UID:                machine.UID,
+							Controller:         pointer.Bool(true), // Indicates this is the managing controller
+							BlockOwnerDeletion: pointer.Bool(true), // Prevent deletion of the machine until the firewall is deleted
+						},
+					},
+				},
+				Spec: v1beta1.KTNetworkFirewallSpec{
+					FirewallRules: []v1beta1.FirewallRules{securityGroupRules},
+				},
+				Status: v1beta1.KTNetworkFirewallStatus{
+					FirewallJobs: []v1beta1.FirewallJobs{ktFirewallJobs},
+				},
+			}
+			err = k8sClient.Create(ctx, firewall)
+			if err != nil {
+				logger1.Errorf("Failed to create KTNetworkFirewall object: %v", err)
+				return err
+			}
+			existingFirewallObj := &v1beta1.KTNetworkFirewall{}
+			err = k8sClient.Get(ctx, client.ObjectKey{Name: machine.Name, Namespace: machine.Namespace}, existingFirewallObj)
+			if err != nil {
+				logger1.Errorf("Failed to fetch just created KTNetworkFirewall object to update its status: %v", err)
+				return err
+			}
+			existingFirewallObj.Status.FirewallJobs = append(existingFirewallObj.Status.FirewallJobs, ktFirewallJobs)
+			err = k8sClient.Status().Update(ctx, existingFirewallObj)
+			if err != nil {
+				logger1.Errorf("Failed to update KTNetworkFirewall object after just creating it: %v", err)
+				return err
+			}
+
+			logger1.Info("KTNetworkFirewall object created successfully!")
+			return nil
+		} else {
+			// Error fetching object
+			logger1.Errorf("Failed to fetch KTNetworkFirewall object: %v", err)
+			return err
+		}
+	} else {
+		// Object exists, update it
+		logger1.Info("KTNetworkFirewall already exists, updating it")
+		existingFirewallObj.Spec.FirewallRules = append(existingFirewallObj.Spec.FirewallRules, securityGroupRules)
+		existingFirewallObj.Status.FirewallJobs = append(existingFirewallObj.Status.FirewallJobs, ktFirewallJobs)
+		err = k8sClient.Status().Update(ctx, existingFirewallObj)
+		if err != nil {
+			logger1.Errorf("Failed to update KTNetworkFirewall object: %v", err)
+			return err
+		}
+		logger1.Info("KTNetworkFirewall object updated successfully!")
+	}
+
+	logger1.Info("Firewall object created successfully!")
+	return nil
+}
+
+// get Job ID is for a "Firewall: Create" request,
+func GetNetworkingJobId(token, job_id, job_type string) (string, error) {
+
+	// Define the API URL
+	apiURL := Config.ApiBaseURL + Config.Zone + "/nc/Etc?command=queryAsyncJob&jobid=" + job_id
+
+	// Set up the HTTP client
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	// Create a new HTTP GET request
+	req, err := http.NewRequest("GET", apiURL, bytes.NewBuffer([]byte{}))
+	if err != nil {
+		logger1.Error("Error GET Networking job id on cloud API request:", err)
+		return "", err
+	}
+
+	// Add headers
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Auth-Token", token) // Replace with actual token
+
+	// Send the request
+	resp, err := client.Do(req)
+	if err != nil {
+		logger1.Error("Error POST Networking job id sending request:", err)
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	// Handle the response
+	fmt.Println("Response POST Networking job id Status:", resp.Status)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		logger1.Error("Error POST Networking job id reading response body:", err)
+		return "", err
+	}
+
+	logger1.Info("-----------------------------------------")
+	logger1.Info("Response POST Networking job id Body Networks:", string(body))
+	logger1.Info("********************************")
+
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		logger1.Info("GET request POST Networking job id successful and got network job id!")
+		// Parse the JSON into the struct
+		var serverResponse QueryAsyncJobResultResponse
+		err = json.Unmarshal(body, &serverResponse)
+		if err != nil {
+			logger1.Error("Error unmarshaling JSON response:", err)
+			return "", err
+		}
+		logger1.Info("Firewall or Network: Create Job ID: ", serverResponse.NcQueryAsyncJobResultResponse)
+		if job_type == "Firewall_Create" {
+			logger1.Info("Firewall: Create Job ID: ", serverResponse.NcQueryAsyncJobResultResponse)
+			return serverResponse.NcQueryAsyncJobResultResponse.Result.ID, nil
+		} else {
+			return serverResponse.NcQueryAsyncJobResultResponse.Result.IPAddress, nil
+		}
+
+		// logger1.Info("Lenmhgth: ", serverResponse)
+		// return filteredResponse, nil
+
+	} else {
+		logger1.Error("GET request POST Networking job id failed with status:", resp.Status)
+		return "", errors.New("get request failed with status: " + resp.Status)
+	}
+
 }

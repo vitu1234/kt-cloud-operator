@@ -134,6 +134,8 @@ spec:
                         vmPvtIp:
                           type: string
                       type: object
+                    staticNatId:
+                      type: string
                   type: object
                 type: array
               OS-DCF:diskConfig:

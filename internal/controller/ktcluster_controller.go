@@ -68,10 +68,70 @@ func (r *KTClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	// Fetch child resources
-	_, err := r.fetchKTSubjectToken(ctx, ktcluster, req)
+	ktSubjectToken, err := r.fetchKTSubjectToken(ctx, ktcluster, req)
 	if err != nil {
 		logger.Error(err, "Failed to find KTSubjectToken")
 		return ctrl.Result{}, nil // Or return an error if this is critical
+	}
+
+	// we have to add finalizers
+	if ktcluster.ObjectMeta.DeletionTimestamp.IsZero() {
+		// The object is not being deleted, so lets add our finalizer if not already added
+		if !controllerutil.ContainsFinalizer(ktcluster, infrastructurev1beta1.KTClusterFinalizer) {
+			controllerutil.AddFinalizer(ktcluster, infrastructurev1beta1.KTClusterFinalizer)
+
+			if err := r.Update(ctx, ktcluster); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+	} else {
+		// The object is being deleted
+		if controllerutil.ContainsFinalizer(ktcluster, infrastructurev1beta1.KTClusterFinalizer) {
+			// our finalizer is present, so lets handle any external dependency
+			// we have to delete the machine on the cloud
+			// we have to remove the finalizer and update the machine
+			// remove our finalizer from the list and update it.
+			// our finalizer is present, so lets handle any external dependency
+			//update the machine status to deleting
+			// ktMachine.Status.Status = "DELETING"
+			// if err := r.Status().Update(ctx, ktMachine); err != nil {
+			// 	return ctrl.Result{}, err
+			// }
+
+			// if err := r.deleteExternalResources(ctx, ktMachine, subjectToken); err != nil {
+			// 	// if fail to delete the external dependency here, return with error
+			// 	// so that it can be retried.
+			// 	return ctrl.Result{}, err
+			// }
+			// remove our finalizer from the list and update it.
+			// controllerutil.RemoveFinalizer(ktSubjectToken, infrastructurev1beta1.KTSubjectTokenFinalizer)
+			// if err := r.Update(ctx, ktSubjectToken); err != nil {
+			// 	return ctrl.Result{}, err
+			// }
+
+			machines, err := r.getClusterAssociatedKTMachines(ctx, ktcluster)
+			if err != nil {
+				logger.Error(err, "Failed to get machines associated with the cluster")
+				return ctrl.Result{}, err
+
+			}
+			logger.Info("Machines associated with the cluster", "machines", len(machines))
+			if len(machines) == 0 {
+				logger.Info("There are no machines associated with the cluster. We have to remove clusterwide finalizers...")
+				controllerutil.RemoveFinalizer(ktSubjectToken, infrastructurev1beta1.KTSubjectTokenFinalizer)
+				if err := r.Update(ctx, ktSubjectToken); err != nil {
+					return ctrl.Result{}, err
+				}
+
+				controllerutil.RemoveFinalizer(ktcluster, infrastructurev1beta1.KTClusterFinalizer)
+				if err := r.Update(ctx, ktcluster); err != nil {
+					return ctrl.Result{}, err
+				}
+			}
+
+		}
+		// Stop reconciliation as the item is being deleted
+		return ctrl.Result{}, nil
 	}
 
 	foundKTMachineTemplateCP, err := r.fetchMachineTemplate(ctx, ktcluster, "-control-plane", req)
@@ -181,6 +241,28 @@ func (r *KTClusterReconciler) ktClusterForKTSubjectTokenOnwer(ktCluster *v1beta1
 	}
 
 	return nil
+}
+
+func (r *KTClusterReconciler) getClusterAssociatedKTMachines(ctx context.Context, ktCluster *v1beta1.KTCluster) ([]v1beta1.KTMachine, error) {
+	logger := log.FromContext(ctx, "LogFrom", "KTCluster")
+
+	// List all the machines in the same namespace
+	machineList := &v1beta1.KTMachineList{}
+	clusterMachineList := &v1beta1.KTMachineList{}
+
+	if err := r.List(ctx, machineList, client.InNamespace(ktCluster.Namespace)); err != nil {
+		logger.Error(err, "Failed to list machines")
+		return nil, err
+	}
+
+	// Filter out the machines that are associated with the same cluster
+	for _, machine := range machineList.Items {
+		if machine.Spec.ClusterName == ktCluster.Name {
+			clusterMachineList.Items = append(clusterMachineList.Items, machine)
+		}
+	}
+	return clusterMachineList.Items, nil
+
 }
 
 // SetupWithManager sets up the controller with the Manager.

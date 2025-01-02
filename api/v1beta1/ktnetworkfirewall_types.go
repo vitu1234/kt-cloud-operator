@@ -29,20 +29,31 @@ type KTNetworkFirewallSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of KTNetworkFirewall. Edit ktnetworkfirewall_types.go to remove/update
-	StartPort    string `json:"startport"`
-	Protocol     int    `json:"protocol"`
-	VirtualIPID  string `json:"virtualipid"`
-	Action       int    `json:"action"`
-	SrcNetworkID string `json:"srcnetworkid"`
-	DstIP        string `json:"dstip"`
-	EndPort      string `json:"endport"`
-	DstNetworkID string `json:"dstnetworkid"`
+	FirewallRules []FirewallRules `json:"firewallRules,omitempty"`
+}
+
+type FirewallRules struct {
+	StartPort    string `json:"startport,omitempty"`
+	Protocol     string `json:"protocol,omitempty"`
+	VirtualIPID  string `json:"virtualipid,omitempty"`
+	Action       string `json:"action,omitempty"`
+	SrcNetworkID string `json:"srcnetworkid,omitempty"`
+	DstIP        string `json:"dstip,omitempty"`
+	EndPort      string `json:"endport,omitempty"`
+	DstNetworkID string `json:"dstnetworkid,omitempty"`
 }
 
 // KTNetworkFirewallStatus defines the observed state of KTNetworkFirewall.
 type KTNetworkFirewallStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	FirewallJobs []FirewallJobs `json:"firewallJobs,omitempty"`
+}
+
+type FirewallJobs struct {
+	JobId     string `json:"jobId,omitempty"`
+	CreatedAt string `json:"createdAt,omitempty"`
+	RuleId    string `json:"ruleId,omitempty"`
 }
 
 // +kubebuilder:object:root=true
