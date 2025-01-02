@@ -79,12 +79,12 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	subjectToken, err := r.getSubjectToken(ctx, ktMachine, req)
 	if err != nil {
 		logger.Error(err, "Failed to find KTSubject token matching cluster")
-		return ctrl.Result{RequeueAfter: time.Minute}, err
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
 	}
 
 	if subjectToken == "" {
 		logger.Error(err, "We have to reconcile again to check the Subject token")
-		return ctrl.Result{RequeueAfter: time.Minute}, err
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
 	}
 
 	// we have to add finalizers
