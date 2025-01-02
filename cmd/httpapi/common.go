@@ -28,7 +28,7 @@ func DeleteVM(machine *v1beta1.KTMachine, token string) error {
 
 	//if serverResponse == nil  it means that the machine is already deleted
 	if serverResponse == nil {
-		logger1.Error("Error creating GET VM request for deletion: serverResponse is nil")
+		logger1.Error("Machine already deleted: serverResponse is nil")
 		return nil
 	}
 
@@ -36,6 +36,7 @@ func DeleteVM(machine *v1beta1.KTMachine, token string) error {
 	err = DeleteVMDependentResources(machine, token)
 	if err != nil {
 		logger1.Error("Error deleting dependent resources:", err)
+		return err
 	}
 
 	//actually delete the machine

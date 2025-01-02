@@ -198,61 +198,65 @@ func (r *KTMachineReconciler) getSubjectToken(ctx context.Context, ktMachine *in
 func (r *KTMachineReconciler) GetMachineAssociatedCluster(ctx context.Context, ktMachine *infrastructurev1beta1.KTMachine, req ctrl.Request) (*v1beta1.KTCluster, error) {
 	logger := log.FromContext(ctx, "LogFrom", "Machine")
 
-	ktMachineDeploymentList := &v1beta1.MachineDeploymentList{}
-	err := r.List(ctx, ktMachineDeploymentList, client.InNamespace(ktMachine.Namespace))
-	if err != nil {
-		logger.Error(err, "failed to list MachineDeployments for this machine")
-		return nil, err
-	}
+	// ktMachineDeploymentList := &v1beta1.MachineDeploymentList{}
+	// err := r.List(ctx, ktMachineDeploymentList, client.InNamespace(ktMachine.Namespace))
+	// if err != nil {
+	// 	logger.Error(err, "failed to list MachineDeployments for this machine")
+	// 	return nil, err
+	// }
 
-	// Filter by ownerReferences
-	var ownerMachineDeployment v1beta1.MachineDeployment
-	for _, machineDeployment := range ktMachineDeploymentList.Items {
-		for _, ref := range ktMachine.OwnerReferences {
-			if ref.UID == machineDeployment.UID {
-				ownerMachineDeployment = machineDeployment
-				logger.Info("Found owned MachineDeployment", "name", machineDeployment.Name)
-				break
-			}
-		}
-	}
+	// // Filter by ownerReferences
+	// var ownerMachineDeployment v1beta1.MachineDeployment
+	// for _, machineDeployment := range ktMachineDeploymentList.Items {
+	// 	for _, ref := range ktMachine.OwnerReferences {
+	// 		if ref.UID == machineDeployment.UID {
+	// 			ownerMachineDeployment = machineDeployment
+	// 			logger.Info("Found owned MachineDeployment", "name", machineDeployment.Name)
+	// 			break
+	// 		}
+	// 	}
+	// }
 
 	// we found matching machine deployment owner
 	// we have to find the cluster from this
 	// KTMachineTemplate is owned by KTCluster and KTMachineTemplate.Name = MachineDeployment.Name, KTMachineTemplate.NameSpace = MachineDeployment.NameSpace
 	// therefore, use MachineDeployment to MachineTemplate to find Cluster then token for the cluster
-	if ownerMachineDeployment.UID != "" {
-		ktMachineTemplate := &v1beta1.KTMachineTemplate{}
-		err := r.Get(ctx, types.NamespacedName{Name: ownerMachineDeployment.Name, Namespace: ownerMachineDeployment.Namespace}, ktMachineTemplate)
+	// if ownerMachineDeployment.UID != "" {
+	// 	ktMachineTemplate := &v1beta1.KTMachineTemplate{}
+	// 	err := r.Get(ctx, types.NamespacedName{Name: ownerMachineDeployment.Name, Namespace: ownerMachineDeployment.Namespace}, ktMachineTemplate)
 
-		if err != nil {
-			if apierrors.IsNotFound(err) {
-				logger.Error(err, "KTMachineTemplate not found no need to proceed for finding SubjectToken To Auth API", "Name", ownerMachineDeployment.Name, "Namespace", ownerMachineDeployment.Namespace)
-				return nil, err
-			}
-			return nil, err
-		}
+	// 	if err != nil {
+	// 		if apierrors.IsNotFound(err) {
+	// 			logger.Error(err, "KTMachineTemplate not found no need to proceed for finding SubjectToken To Auth API", "Name", ownerMachineDeployment.Name, "Namespace", ownerMachineDeployment.Namespace)
+	// 			return nil, err
+	// 		}
+	// 		return nil, err
+	// 	}
 
-		var clusterName string
+	clusterName := ktMachine.Spec.ClusterName
 
-		for _, ref := range ktMachineTemplate.OwnerReferences {
-			if ref.Kind == "KTCluster" {
-				clusterName = ref.Name
-				break
+	// for _, ref := range ktMachineTemplate.OwnerReferences {
+	// 	if ref.Kind == "KTCluster" {
+	// 		clusterName = ref.Name
+	// 		break
 
-			}
-		}
+	// 	}
+	// }
 
-		ktCluster := &v1beta1.KTCluster{}
-		err = r.Get(ctx, types.NamespacedName{Name: clusterName, Namespace: ktMachine.Namespace}, ktCluster)
-		if err != nil {
-			return nil, err
-		}
-
-		return ktCluster, err
+	ktCluster := &v1beta1.KTCluster{}
+	err := r.Get(ctx, types.NamespacedName{Name: clusterName, Namespace: ktMachine.Namespace}, ktCluster)
+	if err != nil {
+		return nil, err
+	}
+	if ktCluster.Name == "" {
+		logger.Info("Found KTCluster associated with machine", "Name", ktCluster.Name, "Namespace", ktCluster.Namespace)
+		return nil, errors.New("failed to find ktcluster associated with machine")
 	}
 
-	return nil, nil
+	return ktCluster, nil
+	// }
+
+	// return nil, nil
 }
 
 func (r *KTMachineReconciler) GetBootstrapReadyMachineControlPlane(ctx context.Context, ktMachine *infrastructurev1beta1.KTMachine, associatedCluster *v1beta1.KTCluster, req ctrl.Request) ([]v1beta1.KTMachine, error) {
