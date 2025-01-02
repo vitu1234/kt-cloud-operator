@@ -242,7 +242,7 @@ func DeleteFirewallSettings(machine *v1beta1.KTMachine, token string) error {
 	jobIdsList := existingFirewallSettings.Status.FirewallJobs
 	logger1.Info("Deleting firewall settings with jobIds:", jobIdsList)
 	for i := 0; i < len(jobIdsList); i++ {
-		err = DeleteFirewallOnCloud(jobIdsList[i].JobId, token)
+		err = DeleteFirewallOnCloud(jobIdsList[i].RuleId, token)
 		if err != nil {
 			logger1.Error("Error deleting firewall:", err)
 		}

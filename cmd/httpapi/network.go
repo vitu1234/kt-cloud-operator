@@ -143,6 +143,23 @@ type NcListVPCResponse struct {
 	Networks []NetworkData `json:"networks"`
 }
 
+// Response for getting networking Job Ids
+type QueryAsyncJobResultResponse struct {
+	NcQueryAsyncJobResultResponse NcQueryAsyncJobResultResponse `json:"nc_queryasyncjobresultresponse"`
+}
+
+type NcQueryAsyncJobResultResponse struct {
+	Result Result `json:"result"`
+	// State  string `json:"state"`
+}
+
+type Result struct {
+	IPAddress   string `json:"ipaddress"`
+	DisplayText string `json:"displaytext"`
+	Success     bool   `json:"success"`
+	ID          string `json:"id"`
+}
+
 func AttachPublicIP(machine *v1beta1.KTMachine, token string) error {
 
 	var machinePrivateAddresses []MachinePrivateAddresses
@@ -745,7 +762,19 @@ func AddFirewallSettings(machine *v1beta1.KTMachine, token string, securityGroup
 
 		logger1.Info("Firewall responce job id: ", serverResponse.NcCreateFirewallRuleResponse.JobId)
 
-		err := createFirewallObjectInK8s(machine, groupRules, serverResponse.NcCreateFirewallRuleResponse.JobId)
+		//get the firewall id and create a firewall object in k8s
+		rule_Id, err := GetNetworkingJobId(token, serverResponse.NcCreateFirewallRuleResponse.JobId, "Firewall_Create")
+		if err != nil {
+			logger1.Errorf("Failed to get job id: %v", err)
+			return err
+		}
+
+		if rule_Id == "" {
+			logger1.Errorf("Failed to get job id")
+			return errors.New("failed to get job id for firewall settings")
+		}
+
+		err = createFirewallObjectInK8s(machine, groupRules, serverResponse.NcCreateFirewallRuleResponse.JobId, rule_Id)
 		if err != nil {
 			logger1.Errorf("Failed to create firewall object in k8s: %v", err)
 			return err
@@ -759,7 +788,7 @@ func AddFirewallSettings(machine *v1beta1.KTMachine, token string, securityGroup
 	}
 }
 
-func createFirewallObjectInK8s(machine *v1beta1.KTMachine, securityGroupRules v1beta1.FirewallRules, s string) error {
+func createFirewallObjectInK8s(machine *v1beta1.KTMachine, securityGroupRules v1beta1.FirewallRules, s, rule_Id string) error {
 	// panic("unimplemented")
 
 	//check if the firewall object already exists
@@ -798,6 +827,7 @@ func createFirewallObjectInK8s(machine *v1beta1.KTMachine, securityGroupRules v1
 
 	ktFirewallJobs := v1beta1.FirewallJobs{
 		JobId:     s,
+		RuleId:    rule_Id,
 		CreatedAt: time.Now().UTC().Format("2006-01-02T15:04:05.000000Z"),
 	}
 
@@ -870,4 +900,71 @@ func createFirewallObjectInK8s(machine *v1beta1.KTMachine, securityGroupRules v1
 
 	logger1.Info("Firewall object created successfully!")
 	return nil
+}
+
+// get Job ID is for a "Firewall: Create" request,
+func GetNetworkingJobId(token, job_id, job_type string) (string, error) {
+
+	// Define the API URL
+	apiURL := Config.ApiBaseURL + Config.Zone + "/nc/Etc?command=queryAsyncJob&jobid=" + job_id
+
+	// Set up the HTTP client
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	// Create a new HTTP GET request
+	req, err := http.NewRequest("GET", apiURL, bytes.NewBuffer([]byte{}))
+	if err != nil {
+		logger1.Error("Error GET Networking job id on cloud API request:", err)
+		return "", err
+	}
+
+	// Add headers
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Auth-Token", token) // Replace with actual token
+
+	// Send the request
+	resp, err := client.Do(req)
+	if err != nil {
+		logger1.Error("Error POST Networking job id sending request:", err)
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	// Handle the response
+	fmt.Println("Response POST Networking job id Status:", resp.Status)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		logger1.Error("Error POST Networking job id reading response body:", err)
+		return "", err
+	}
+
+	logger1.Info("-----------------------------------------")
+	logger1.Info("Response POST Networking job id Body Networks:", string(body))
+	logger1.Info("********************************")
+
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		logger1.Info("GET request POST Networking job id successful and got network job id!")
+		// Parse the JSON into the struct
+		var serverResponse QueryAsyncJobResultResponse
+		err = json.Unmarshal(body, &serverResponse)
+		if err != nil {
+			logger1.Error("Error unmarshaling JSON response:", err)
+			return "", err
+		}
+		logger1.Info("Firewall or Network: Create Job ID: ", serverResponse.NcQueryAsyncJobResultResponse)
+		if job_type == "Firewall_Create" {
+			logger1.Info("Firewall: Create Job ID: ", serverResponse.NcQueryAsyncJobResultResponse)
+			return serverResponse.NcQueryAsyncJobResultResponse.Result.ID, nil
+		} else {
+			return serverResponse.NcQueryAsyncJobResultResponse.Result.IPAddress, nil
+		}
+
+		// logger1.Info("Lenmhgth: ", serverResponse)
+		// return filteredResponse, nil
+
+	} else {
+		logger1.Error("GET request POST Networking job id failed with status:", resp.Status)
+		return "", errors.New("get request failed with status: " + resp.Status)
+	}
+
 }

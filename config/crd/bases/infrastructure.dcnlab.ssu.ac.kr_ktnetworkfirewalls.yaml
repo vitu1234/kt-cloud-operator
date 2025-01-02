@@ -76,6 +76,8 @@ spec:
                       type: string
                     jobId:
                       type: string
+                    ruleId:
+                      type: string
                   type: object
                 type: array
             type: object
