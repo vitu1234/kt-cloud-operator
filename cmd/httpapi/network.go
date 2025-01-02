@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,7 +13,10 @@ import (
 	// Meta API for object metadata
 
 	v1beta1 "dcnlab.ssu.ac.kr/kt-cloud-operator/api/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/pointer"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type PublicNetwork struct {
@@ -76,6 +80,7 @@ type NATAttachResponse struct {
 type NcEnableStaticNatResponse struct {
 	DisplayText string `json:"displaytext"`
 	Success     bool   `json:"success"`
+	Id          string `json:"id"`
 }
 
 // create firewall settings response
@@ -266,8 +271,9 @@ func AttachPublicIP(machine *v1beta1.KTMachine, token string) error {
 		}
 		machineStatusCopy := machine.Status
 		assignedIp := v1beta1.AssignedPublicIps{
-			Id: publicIPs.PublicIps[0].Id,
-			IP: publicIPs.PublicIps[0].IP,
+			Id:          publicIPs.PublicIps[0].Id,
+			IP:          publicIPs.PublicIps[0].IP,
+			StaticNatId: serverResponse.NcEnableStaticNatResponse.Id,
 			PairedPvtNetwork: v1beta1.PairedPvtNetwork{
 				NetworkName: networkName,
 				NetworkID:   networkData.ID,
@@ -724,12 +730,130 @@ func AddFirewallSettings(machine *v1beta1.KTMachine, token string, securityGroup
 		if serverResponse.NcCreateFirewallRuleResponse.DisplayText != "" {
 			return errors.New(serverResponse.NcCreateFirewallRuleResponse.DisplayText)
 		}
-
 		logger1.Info("Added firewall settings to the cluster ")
+
+		groupRules := v1beta1.FirewallRules{
+			StartPort:    securityGroupRules.StartPort,
+			Protocol:     securityGroupRules.Protocol,
+			VirtualIPID:  virtualipid,
+			Action:       securityGroupRules.Action,
+			SrcNetworkID: srcnetworkid,
+			DstIP:        securityGroupRules.Dstip,
+			EndPort:      securityGroupRules.EndPort,
+			DstNetworkID: dstnetworkid,
+		}
+
+		err := createFirewallObjectInK8s(machine, groupRules, serverResponse.NcCreateFirewallRuleResponse.JobId)
+		if err != nil {
+			logger1.Errorf("Failed to create firewall object in k8s: %v", err)
+			return err
+		}
+
 		return nil
 
 	} else {
 		logger1.Error("POST request failed with status:", resp.Status)
 		return errors.New("post request failed with status:" + resp.Status)
 	}
+}
+
+func createFirewallObjectInK8s(machine *v1beta1.KTMachine, securityGroupRules v1beta1.FirewallRules, s string) error {
+	// panic("unimplemented")
+
+	//check if the firewall object already exists
+	// if it exists, update the object
+	// if it does not exist, create the object
+	// if it exists and the job id is the same, do nothing
+	// if it exists and the job id is different, update the object
+
+	ctx := context.Background()
+	// Update the machine K8s Resource
+	clientConfig, err := getRestConfig(Config.Kubeconfig)
+	if err != nil {
+		logger1.Errorf("Cannot prepare k8s client config: %v. Kubeconfig was: %s", err, Config.Kubeconfig)
+		panic(err.Error())
+	}
+	// Set up a scheme (use runtime.Scheme from apimachinery)
+	scheme := runtime.NewScheme()
+	// Create Kubernetes client
+	k8sClient, err := getClient(clientConfig, scheme)
+	if err != nil {
+		logger1.Fatalf("Failed to create Kubernetes client: %v", err)
+		return err
+	}
+
+	ktFirewallRules := v1beta1.FirewallRules{
+		StartPort:    securityGroupRules.StartPort,
+		Protocol:     securityGroupRules.Protocol,
+		VirtualIPID:  securityGroupRules.VirtualIPID,
+		Action:       securityGroupRules.Action,
+		SrcNetworkID: securityGroupRules.SrcNetworkID,
+		DstIP:        securityGroupRules.DstIP,
+		EndPort:      securityGroupRules.EndPort,
+		DstNetworkID: securityGroupRules.DstNetworkID,
+	}
+
+	ktFirewallJobs := v1beta1.FirewallJobs{
+		JobId:     s,
+		CreatedAt: time.Now().UTC().Format("2006-01-02T15:04:05.000000Z"),
+	}
+
+	existingFirewallObj := &v1beta1.KTNetworkFirewall{}
+	err = k8sClient.Get(ctx, client.ObjectKey{
+		Name:      machine.Name,
+		Namespace: machine.Namespace,
+	}, existingFirewallObj)
+	if err != nil {
+		if client.IgnoreNotFound(err) == nil {
+			// Object does not exist, create it
+			logger1.Info("KTSubjectToken does not exist, creating a new one")
+
+			firewall := &v1beta1.KTNetworkFirewall{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      machine.Name,
+					Namespace: machine.Namespace,
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							APIVersion:         machine.APIVersion,
+							Kind:               machine.Kind,
+							Name:               machine.Name,
+							UID:                machine.UID,
+							Controller:         pointer.Bool(true), // Indicates this is the managing controller
+							BlockOwnerDeletion: pointer.Bool(true), // Prevent deletion of the machine until the firewall is deleted
+						},
+					},
+				},
+				Spec: v1beta1.KTNetworkFirewallSpec{
+					FirewallRules: []v1beta1.FirewallRules{ktFirewallRules},
+				},
+				Status: v1beta1.KTNetworkFirewallStatus{
+					FirewallJobs: []v1beta1.FirewallJobs{ktFirewallJobs},
+				},
+			}
+			err = k8sClient.Create(ctx, firewall)
+			if err != nil {
+				logger1.Errorf("Failed to create KTNetworkFirewall object: %v", err)
+				return err
+			}
+			logger1.Info("KTNetworkFirewall object created successfully!")
+		} else {
+			// Error fetching object
+			logger1.Errorf("Failed to fetch KTNetworkFirewall object: %v", err)
+			return err
+		}
+	} else {
+		// Object exists, update it
+		logger1.Info("KTNetworkFirewall already exists, updating it")
+		existingFirewallObj.Spec.FirewallRules = append(existingFirewallObj.Spec.FirewallRules, ktFirewallRules)
+		existingFirewallObj.Status.FirewallJobs = append(existingFirewallObj.Status.FirewallJobs, ktFirewallJobs)
+		err = k8sClient.Status().Update(ctx, existingFirewallObj)
+		if err != nil {
+			logger1.Errorf("Failed to update KTNetworkFirewall object: %v", err)
+			return err
+		}
+		logger1.Info("KTNetworkFirewall object updated successfully!")
+	}
+
+	logger1.Info("Firewall object created successfully!")
+	return nil
 }

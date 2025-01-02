@@ -20,8 +20,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+const (
+	// KTMachineFinalizer allows ReconcileKTMachine to clean up resources associated with KTVM before
+	// removing it from the apiserver.
+	KTMachineFinalizer = "ktmachine.infrastructure.dcnlab.ssu.ac.kr"
+)
 
 // KTMachineSpec defines the desired state of KTMachine.
 type KTMachineSpec struct {
@@ -48,6 +51,7 @@ type Networks struct {
 type AssignedPublicIps struct {
 	IP               string           `json:"ip,omitempty"`
 	Id               string           `json:"id,omitempty"`
+	StaticNatId      string           `json:"staticNatId,omitempty"`
 	PairedPvtNetwork PairedPvtNetwork `json:"pairedPvtNetwork,omitempty"`
 }
 

@@ -28,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"dcnlab.ssu.ac.kr/kt-cloud-operator/api/v1beta1"
@@ -78,12 +79,45 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	subjectToken, err := r.getSubjectToken(ctx, ktMachine, req)
 	if err != nil {
 		logger.Error(err, "Failed to find KTSubject token matching cluster")
-		return ctrl.Result{RequeueAfter: time.Minute}, nil
+		return ctrl.Result{RequeueAfter: time.Minute}, err
 	}
 
 	if subjectToken == "" {
 		logger.Error(err, "We have to reconcile again to check the Subject token")
-		return ctrl.Result{RequeueAfter: time.Minute}, nil
+		return ctrl.Result{RequeueAfter: time.Minute}, err
+	}
+
+	// we have to add finalizers
+	if ktMachine.ObjectMeta.DeletionTimestamp.IsZero() {
+		// The object is not being deleted, so lets add our finalizer if not already added
+		if !controllerutil.ContainsFinalizer(ktMachine, infrastructurev1beta1.KTMachineFinalizer) {
+			controllerutil.AddFinalizer(ktMachine, infrastructurev1beta1.KTMachineFinalizer)
+
+			if err := r.Update(ctx, ktMachine); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+	} else {
+		// The object is being deleted
+		if controllerutil.ContainsFinalizer(ktMachine, infrastructurev1beta1.KTMachineFinalizer) {
+			// our finalizer is present, so lets handle any external dependency
+			// we have to delete the machine on the cloud
+			// we have to remove the finalizer and update the machine
+			// remove our finalizer from the list and update it.
+			// our finalizer is present, so lets handle any external dependency
+			if err := r.deleteExternalResources(ctx, ktMachine, subjectToken); err != nil {
+				// if fail to delete the external dependency here, return with error
+				// so that it can be retried.
+				return ctrl.Result{}, err
+			}
+			// remove our finalizer from the list and update it.
+			controllerutil.RemoveFinalizer(ktMachine, infrastructurev1beta1.KTMachineFinalizer)
+			if err := r.Update(ctx, ktMachine); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+		// Stop reconciliation as the item is being deleted
+		return ctrl.Result{}, nil
 	}
 
 	// check if current machine is control plane
@@ -94,17 +128,17 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if cluster == nil || err != nil {
 		if cluster == nil {
 			logger.Error(errors.New("cluster empty from get-associated-cluster for machine"), "Failed to retrieve cluster for Machine")
-			return ctrl.Result{RequeueAfter: time.Minute}, nil
+			return ctrl.Result{RequeueAfter: time.Minute}, err
 		} else if err != nil {
 			logger.Error(err, "Failed to retrieve cluster for Machine")
-			return ctrl.Result{RequeueAfter: time.Minute}, nil
+			return ctrl.Result{RequeueAfter: time.Minute}, err
 		}
 	}
 
 	// Reconcile infrastructure state
 	if err := r.reconcileInfrastructure(ctx, ktMachine, cluster, subjectToken, req); err != nil {
 		logger.Error(err, "Failed to reconcile infrastructure")
-		return ctrl.Result{RequeueAfter: time.Minute / 2}, nil
+		return ctrl.Result{RequeueAfter: time.Minute / 2}, err
 	}
 
 	logger.Info("Successfully reconciled KTMachine", "machine", req.NamespacedName)
@@ -391,10 +425,25 @@ func (r *KTMachineReconciler) reconcileInfrastructure(ctx context.Context, ktMac
 	return nil
 }
 
+// delete all resources associated with the machine on KT cloud
+func (r *KTMachineReconciler) deleteExternalResources(ctx context.Context, ktMachine *infrastructurev1beta1.KTMachine, subjectToken string) error {
+	logger := log.FromContext(ctx, "LogFrom", "Machine")
+
+	//delete machine on cloud
+	err := httpapi.DeleteVM(ktMachine, subjectToken)
+	if err != nil {
+		logger.Error(err, "Failed to delete VM on KT Cloud during API Call")
+		return err
+	}
+
+	return nil
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *KTMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&infrastructurev1beta1.KTMachine{}).
+		Owns(&v1beta1.KTNetworkFirewall{}).
 		Named("ktmachine").
 		Complete(r)
 }
