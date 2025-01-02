@@ -76,11 +76,12 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	//first get the token associated for the cluster and find token
-	subjectToken, err := r.getSubjectToken(ctx, ktMachine, req)
+	ktSubjectToken, err := r.getSubjectToken(ctx, ktMachine, req)
 	if err != nil {
 		logger.Error(err, "Failed to find KTSubject token matching cluster")
 		return ctrl.Result{RequeueAfter: time.Minute}, nil
 	}
+	subjectToken := ktSubjectToken.Spec.SubjectToken
 
 	if subjectToken == "" {
 		logger.Error(err, "We have to reconcile again to check the Subject token")
@@ -121,6 +122,11 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			if err := r.Update(ctx, ktMachine); err != nil {
 				return ctrl.Result{}, err
 			}
+
+			controllerutil.RemoveFinalizer(ktSubjectToken, infrastructurev1beta1.KTSubjectTokenFinalizer)
+			if err := r.Update(ctx, ktSubjectToken); err != nil {
+				return ctrl.Result{}, err
+			}
 		}
 		// Stop reconciliation as the item is being deleted
 		return ctrl.Result{}, nil
@@ -134,17 +140,17 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if cluster == nil || err != nil {
 		if cluster == nil {
 			logger.Error(errors.New("cluster empty from get-associated-cluster for machine"), "Failed to retrieve cluster for Machine")
-			return ctrl.Result{RequeueAfter: time.Minute}, err
+			return ctrl.Result{}, err
 		} else if err != nil {
 			logger.Error(err, "Failed to retrieve cluster for Machine")
-			return ctrl.Result{RequeueAfter: time.Minute}, err
+			return ctrl.Result{}, err
 		}
 	}
 
 	// Reconcile infrastructure state
 	if err := r.reconcileInfrastructure(ctx, ktMachine, cluster, subjectToken, req); err != nil {
 		logger.Error(err, "Failed to reconcile infrastructure")
-		return ctrl.Result{RequeueAfter: time.Minute / 2}, err
+		return ctrl.Result{}, err
 	}
 
 	logger.Info("Successfully reconciled KTMachine", "machine", req.NamespacedName)
@@ -152,16 +158,16 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	return ctrl.Result{RequeueAfter: time.Minute}, nil
 }
 
-func (r *KTMachineReconciler) getSubjectToken(ctx context.Context, ktMachine *infrastructurev1beta1.KTMachine, req ctrl.Request) (string, error) {
+func (r *KTMachineReconciler) getSubjectToken(ctx context.Context, ktMachine *infrastructurev1beta1.KTMachine, req ctrl.Request) (*v1beta1.KTSubjectToken, error) {
 
 	logger := log.FromContext(ctx, "LogFrom", "Machine")
 
 	cluster, err := r.GetMachineAssociatedCluster(ctx, ktMachine, req)
 	if cluster == nil || err != nil {
 		if cluster == nil {
-			return "", errors.New("Failed to retrieve cluster for Machine")
+			return nil, errors.New("Failed to retrieve cluster for Machine")
 		} else if err != nil {
-			return "", err
+			return nil, err
 		}
 	}
 
@@ -173,12 +179,12 @@ func (r *KTMachineReconciler) getSubjectToken(ctx context.Context, ktMachine *in
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Error(err, "Failed to get KTSubjectTokens associated with cluster", "Name", cluster.Name, "Namespace", cluster.Namespace)
-			return "nil", err
+			return nil, err
 		}
-		return "", err
+		return nil, err
 	}
 
-	return ktSubjectToken.Spec.SubjectToken, nil
+	return ktSubjectToken, nil
 
 }
 
