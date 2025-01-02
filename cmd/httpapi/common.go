@@ -23,6 +23,12 @@ func DeleteVM(machine *v1beta1.KTMachine, token string) error {
 	serverResponse, err := GetCreatedVM(machine, token)
 	if err != nil {
 		logger1.Error("Error creating GET VM request for deletion:", err)
+		//check if error contains 404 Not Found message
+		if err.Error() == "GET request failed with status: 404 Not Found" {
+			logger1.Error("Machine already deleted: 404 Not Found")
+			return nil
+		}
+
 		return err
 	}
 
@@ -200,6 +206,8 @@ func DeleteVMDependentResources(machine *v1beta1.KTMachine, token string) error 
 func DeleteFirewallSettings(machine *v1beta1.KTMachine, token string) error {
 	ctx := context.Background()
 	// Update the machine K8s Resource
+	logger1.Info("Deleting firewall settings for machine:", machine.Name)
+
 	clientConfig, err := getRestConfig(Config.Kubeconfig)
 	if err != nil {
 		logger1.Errorf("Cannot prepare k8s client config: %v. Kubeconfig was: %s", err, Config.Kubeconfig)
@@ -232,6 +240,7 @@ func DeleteFirewallSettings(machine *v1beta1.KTMachine, token string) error {
 	}
 
 	jobIdsList := existingFirewallSettings.Status.FirewallJobs
+	logger1.Info("Deleting firewall settings with jobIds:", jobIdsList)
 	for i := 0; i < len(jobIdsList); i++ {
 		err = DeleteFirewallOnCloud(jobIdsList[i].JobId, token)
 		if err != nil {

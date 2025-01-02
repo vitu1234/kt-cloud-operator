@@ -730,7 +730,7 @@ func AddFirewallSettings(machine *v1beta1.KTMachine, token string, securityGroup
 		if serverResponse.NcCreateFirewallRuleResponse.DisplayText != "" {
 			return errors.New(serverResponse.NcCreateFirewallRuleResponse.DisplayText)
 		}
-		logger1.Info("Added firewall settings to the cluster ")
+		logger1.Info("Add firewall settings to the cluster ")
 
 		groupRules := v1beta1.FirewallRules{
 			StartPort:    securityGroupRules.StartPort,
@@ -742,6 +742,8 @@ func AddFirewallSettings(machine *v1beta1.KTMachine, token string, securityGroup
 			EndPort:      securityGroupRules.EndPort,
 			DstNetworkID: dstnetworkid,
 		}
+
+		logger1.Info("Firewall responce job id: ", serverResponse.NcCreateFirewallRuleResponse.JobId)
 
 		err := createFirewallObjectInK8s(machine, groupRules, serverResponse.NcCreateFirewallRuleResponse.JobId)
 		if err != nil {
@@ -765,6 +767,7 @@ func createFirewallObjectInK8s(machine *v1beta1.KTMachine, securityGroupRules v1
 	// if it does not exist, create the object
 	// if it exists and the job id is the same, do nothing
 	// if it exists and the job id is different, update the object
+	logger1.Info("Creating Firewall object in K8s with job id: ", s)
 
 	ctx := context.Background()
 	// Update the machine K8s Resource
@@ -782,16 +785,16 @@ func createFirewallObjectInK8s(machine *v1beta1.KTMachine, securityGroupRules v1
 		return err
 	}
 
-	ktFirewallRules := v1beta1.FirewallRules{
-		StartPort:    securityGroupRules.StartPort,
-		Protocol:     securityGroupRules.Protocol,
-		VirtualIPID:  securityGroupRules.VirtualIPID,
-		Action:       securityGroupRules.Action,
-		SrcNetworkID: securityGroupRules.SrcNetworkID,
-		DstIP:        securityGroupRules.DstIP,
-		EndPort:      securityGroupRules.EndPort,
-		DstNetworkID: securityGroupRules.DstNetworkID,
-	}
+	// ktFirewallRules := v1beta1.FirewallRules{
+	// 	StartPort:    securityGroupRules.StartPort,
+	// 	Protocol:     securityGroupRules.Protocol,
+	// 	VirtualIPID:  securityGroupRules.VirtualIPID,
+	// 	Action:       securityGroupRules.Action,
+	// 	SrcNetworkID: securityGroupRules.SrcNetworkID,
+	// 	DstIP:        securityGroupRules.DstIP,
+	// 	EndPort:      securityGroupRules.EndPort,
+	// 	DstNetworkID: securityGroupRules.DstNetworkID,
+	// }
 
 	ktFirewallJobs := v1beta1.FirewallJobs{
 		JobId:     s,
@@ -824,7 +827,7 @@ func createFirewallObjectInK8s(machine *v1beta1.KTMachine, securityGroupRules v1
 					},
 				},
 				Spec: v1beta1.KTNetworkFirewallSpec{
-					FirewallRules: []v1beta1.FirewallRules{ktFirewallRules},
+					FirewallRules: []v1beta1.FirewallRules{securityGroupRules},
 				},
 				Status: v1beta1.KTNetworkFirewallStatus{
 					FirewallJobs: []v1beta1.FirewallJobs{ktFirewallJobs},
@@ -844,7 +847,7 @@ func createFirewallObjectInK8s(machine *v1beta1.KTMachine, securityGroupRules v1
 	} else {
 		// Object exists, update it
 		logger1.Info("KTNetworkFirewall already exists, updating it")
-		existingFirewallObj.Spec.FirewallRules = append(existingFirewallObj.Spec.FirewallRules, ktFirewallRules)
+		existingFirewallObj.Spec.FirewallRules = append(existingFirewallObj.Spec.FirewallRules, securityGroupRules)
 		existingFirewallObj.Status.FirewallJobs = append(existingFirewallObj.Status.FirewallJobs, ktFirewallJobs)
 		err = k8sClient.Status().Update(ctx, existingFirewallObj)
 		if err != nil {
