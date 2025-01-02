@@ -136,15 +136,15 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 				return ctrl.Result{}, err
 			}
 
-			controllerutil.RemoveFinalizer(ktSubjectToken, infrastructurev1beta1.KTSubjectTokenFinalizer)
-			if err := r.Update(ctx, ktSubjectToken); err != nil {
-				return ctrl.Result{}, err
-			}
+			// controllerutil.RemoveFinalizer(ktSubjectToken, infrastructurev1beta1.KTSubjectTokenFinalizer)
+			// if err := r.Update(ctx, ktSubjectToken); err != nil {
+			// 	return ctrl.Result{}, err
+			// }
 
-			controllerutil.RemoveFinalizer(cluster, infrastructurev1beta1.KTClusterFinalizer)
-			if err := r.Update(ctx, cluster); err != nil {
-				return ctrl.Result{}, err
-			}
+			// controllerutil.RemoveFinalizer(cluster, infrastructurev1beta1.KTClusterFinalizer)
+			// if err := r.Update(ctx, cluster); err != nil {
+			// 	return ctrl.Result{}, err
+			// }
 		}
 		// Stop reconciliation as the item is being deleted
 		return ctrl.Result{}, nil
