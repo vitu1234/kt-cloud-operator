@@ -802,10 +802,7 @@ func createFirewallObjectInK8s(machine *v1beta1.KTMachine, securityGroupRules v1
 	}
 
 	existingFirewallObj := &v1beta1.KTNetworkFirewall{}
-	err = k8sClient.Get(ctx, client.ObjectKey{
-		Name:      machine.Name,
-		Namespace: machine.Namespace,
-	}, existingFirewallObj)
+	err = k8sClient.Get(ctx, client.ObjectKey{Name: machine.Name, Namespace: machine.Namespace}, existingFirewallObj)
 	if err != nil {
 		if client.IgnoreNotFound(err) == nil {
 			// Object does not exist, create it
@@ -838,7 +835,21 @@ func createFirewallObjectInK8s(machine *v1beta1.KTMachine, securityGroupRules v1
 				logger1.Errorf("Failed to create KTNetworkFirewall object: %v", err)
 				return err
 			}
+			existingFirewallObj := &v1beta1.KTNetworkFirewall{}
+			err = k8sClient.Get(ctx, client.ObjectKey{Name: machine.Name, Namespace: machine.Namespace}, existingFirewallObj)
+			if err != nil {
+				logger1.Errorf("Failed to fetch just created KTNetworkFirewall object to update its status: %v", err)
+				return err
+			}
+			existingFirewallObj.Status.FirewallJobs = append(existingFirewallObj.Status.FirewallJobs, ktFirewallJobs)
+			err = k8sClient.Status().Update(ctx, existingFirewallObj)
+			if err != nil {
+				logger1.Errorf("Failed to update KTNetworkFirewall object after just creating it: %v", err)
+				return err
+			}
+
 			logger1.Info("KTNetworkFirewall object created successfully!")
+			return nil
 		} else {
 			// Error fetching object
 			logger1.Errorf("Failed to fetch KTNetworkFirewall object: %v", err)
