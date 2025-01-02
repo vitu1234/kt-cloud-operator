@@ -175,7 +175,7 @@ func GetCreatedVM(machine *v1beta1.KTMachine, token string) (*v1beta1.KTMachineS
 // }
 
 func DeleteVMDependentResources(machine *v1beta1.KTMachine, token string) error {
-	if len(machine.Status.AssignedPublicIps) > 0 {
+	if len(machine.Status.AssignedPublicIps) == 0 {
 		return nil
 	}
 

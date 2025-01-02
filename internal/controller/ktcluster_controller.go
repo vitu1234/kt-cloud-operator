@@ -115,7 +115,7 @@ func (r *KTClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 				return ctrl.Result{}, err
 
 			}
-			logger.Info("Machines associated with the cluster", "machines", string(len(machines)))
+			logger.Info("Machines associated with the cluster", "machines", len(machines))
 			if len(machines) == 0 {
 				logger.Info("There are no machines associated with the cluster. We have to remove clusterwide finalizers...")
 				controllerutil.RemoveFinalizer(ktSubjectToken, infrastructurev1beta1.KTSubjectTokenFinalizer)
