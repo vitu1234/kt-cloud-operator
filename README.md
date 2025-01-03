@@ -85,8 +85,9 @@ This is an kubernetes operator used create a Kubernetes cluster on KT Cloud [her
 
 ### Others
 
-* if you get the error below in the logs, don’t worry the reconciler is just checking the CP, it will reconcile to check if the API server is ready on port 8000
+* APIs can be tested using the postman exported JSON Collection in KTCloud.postman_collection.json, import it in POSTMAN and get startedi
+* f you get the error below in the logs, don’t worry the reconciler is just checking the CP, it will reconcile to check if the API server is ready on port 8000
 
-  ```
-  "error": "Get \"http://${public_ip}:8000\": dial tcp 211.57.84.211:8000: connect: connection refused"}
-  ```
+```
+	"error": "Get \"http://${public_ip}:8000\": dial tcp 211.57.84.211:8000: connect: connection refused"}
+```

@@ -1,0 +1,494 @@
+{
+	"info": {
+		"_postman_id": "1db456b0-907e-4746-905e-896fdf290810",
+		"name": "KTCloud",
+		"description": "# 🚀 Get started here\n\nThis template guides you through CRUD operations (GET, POST, PUT, DELETE), variables, and tests.\n\n## 🔖 **How to use this template**\n\n#### **Step 1: Send requests**\n\nRESTful APIs allow you to perform CRUD operations using the POST, GET, PUT, and DELETE HTTP methods.\n\nThis collection contains each of these [request](https://learning.postman.com/docs/sending-requests/requests/) types. Open each request and click \"Send\" to see what happens.\n\n#### **Step 2: View responses**\n\nObserve the response tab for status code (200 OK), response time, and size.\n\n#### **Step 3: Send new Body data**\n\nUpdate or add new data in \"Body\" in the POST request. Typically, Body data is also used in PUT request.\n\n```\n{\n    \"name\": \"Add your name in the body\"\n}\n\n ```\n\n#### **Step 4: Update the variable**\n\nVariables enable you to store and reuse values in Postman. We have created a [variable](https://learning.postman.com/docs/sending-requests/variables/) called `base_url` with the sample request [https://postman-api-learner.glitch.me](https://postman-api-learner.glitch.me). Replace it with your API endpoint to customize this collection.\n\n#### **Step 5: Add tests in the \"Scripts\" tab**\n\nAdding tests to your requests can help you confirm that your API is working as expected. You can write test scripts in JavaScript and view the output in the \"Test Results\" tab.\n\n<img src=\"https://content.pstmn.io/fa30ea0a-373d-4545-a668-e7b283cca343/aW1hZ2UucG5n\" alt=\"\" height=\"1530\" width=\"2162\">\n\n## 💪 Pro tips\n\n- Use folders to group related requests and organize the collection.\n    \n- Add more [scripts](https://learning.postman.com/docs/writing-scripts/intro-to-scripts/) to verify if the API works as expected and execute workflows.\n    \n\n## 💡Related templates\n\n[API testing basics](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9a37a28-055b-49cd-8c7e-97494a21eb54&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[API documentation](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9c28f47-1253-44af-a2f3-20dce4da1f18&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[Authorization methods](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=31a9a6ed-4cdf-4ced-984c-d12c9aec1c27&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "17532400"
+	},
+	"item": [
+		{
+			"name": "get-flavors",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Auth-Token",
+						"value": "gAAAAABnbVGyBa-AJqy4ytgUuxDLaM21ecXWRj6FwtzcrVcPGABX21ICynphudFkByBcpWemCxt999W9Irf3mPjZAMK0R8mzMGHUQOI49t9RA9KRkO50WOTqLV6J6IujsrHU3AG8NLJF6kx_lyNNGCZr8VAske2KzTaQhXZJXAcZr9PRjn3OaKM",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://api.ucloudbiz.olleh.com/gd1/server/flavors/detail",
+					"protocol": "https",
+					"host": [
+						"api",
+						"ucloudbiz",
+						"olleh",
+						"com"
+					],
+					"path": [
+						"gd1",
+						"server",
+						"flavors",
+						"detail"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "kt-cloud-login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Successful POST request\", function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+							"});",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"auth\": {\n    \"identity\": {\n      \"methods\": [\n        \"password\"\n      ],\n      \"password\": {\n        \"user\": {\n          \"domain\": {\n            \"id\": \"default\"\n          },\n          \"name\": \"example@email.com\",\n          \"password\": \"example-password\"\n        }\n      }\n    },\n    \"scope\": {\n      \"project\": {\n        \"domain\": {\n          \"id\": \"default\"\n        },\n        \"name\": \"example@email.com\"\n      }\n    }\n  }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://api.ucloudbiz.olleh.com/gd1/identity/auth/tokens",
+					"protocol": "https",
+					"host": [
+						"api",
+						"ucloudbiz",
+						"olleh",
+						"com"
+					],
+					"path": [
+						"gd1",
+						"identity",
+						"auth",
+						"tokens"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "delete-vm",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Auth-Token",
+						"value": "gAAAAABnOvWaYpsicEVP9VMIein5k44W4GNKWrrygxNdwiAomCk5xTbs7UBucqy_XjaY_Zm0YVG87wBtuoQ7uCcbKu4XuJ5J5BWaYiODr2I0mE3HIqP7T8O6EWeiA0VAdZ9haezprH4pqT8n4D5s_gk_YDbCcNUBnBdFMihCdAHLx6Rx2OaV5UU",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"forceDelete\": null\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://api.ucloudbiz.olleh.com/gd1/server/servers/c6f5db49-004f-4deb-ae27-9b78f2644f8d/action",
+					"protocol": "https",
+					"host": [
+						"api",
+						"ucloudbiz",
+						"olleh",
+						"com"
+					],
+					"path": [
+						"gd1",
+						"server",
+						"servers",
+						"c6f5db49-004f-4deb-ae27-9b78f2644f8d",
+						"action"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get-networks",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Auth-Token",
+						"value": "gAAAAABndrW9ltlvpuwZboM42R25G9klxJZs6AShJISxcSTtWhmA1fe_vf7Zh3HKFsjNeApiKR95rwgEvGt-_fjFbk4u2Rqc2bOiQUn_WHo_B-c7lL1KmL4n_b0Qdm3XUtlEZQ2A7Q_idp8phwps5MIIOcmJsgM8TshcxiFiI4ZKCHZKzKdDfX4",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\": \"okj\",\r\n    \"zoneId\": \"DX-G\",\r\n    \"templateId\": \"0c2df507-b809-49b3-89c8-302371c0935c\",\r\n    \"flavorId\": \"a21205b0-b45c-464d-8543-d63ab28e7d7a\",\r\n    \"tierId\": \"7031a1e3-7435-4cd2-9087-671a995f3bbd\",\r\n    \"volumeType\": \"hdd\",\r\n    \"volumeSize\": 50,\r\n    \"keyName\": \"test1\",\r\n    \"usagePlanType\": \"hourly\",\r\n    \"type\": \"snapshot\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://api.ucloudbiz.olleh.com/gd1/nc/Network",
+					"protocol": "https",
+					"host": [
+						"api",
+						"ucloudbiz",
+						"olleh",
+						"com"
+					],
+					"path": [
+						"gd1",
+						"nc",
+						"Network"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create-vm",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Auth-Token",
+						"value": "gAAAAABnbVGyBa-AJqy4ytgUuxDLaM21ecXWRj6FwtzcrVcPGABX21ICynphudFkByBcpWemCxt999W9Irf3mPjZAMK0R8mzMGHUQOI49t9RA9KRkO50WOTqLV6J6IujsrHU3AG8NLJF6kx_lyNNGCZr8VAske2KzTaQhXZJXAcZr9PRjn3OaKM",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"server\": {\r\n    \"name\": \"Test-ServerAPI\",\r\n    \"key_name\": \"test1\",\r\n    \"flavorRef\": \"704ee1ca-4720-4f6a-b05a-669060940186\", // id on https://api.ucloudbiz.olleh.com/gd1/server/flavors/detail\r\n    // \"flavorRef\": \"a21205b0-b45c-464d-8543-d63ab28e7d7a\",\r\n    \"availability_zone\": \"DX-G\",\r\n    \"networks\": [\r\n      {\r\n        \"uuid\": \"7031a1e3-7435-4cd2-9087-671a995f3bbd\" //osnetworkid on https://api.ucloudbiz.olleh.com/gd1/nc/Network\r\n      }\r\n    ],\r\n    \"block_device_mapping_v2\": [\r\n      {\r\n        \"destination_type\": \"volume\",\r\n        \"boot_index\": \"0\",\r\n        \"source_type\": \"image\",\r\n        \"volume_size\": 50,\r\n        \"uuid\": \"ece8ab48-0752-4de0-bf93-f189c60946de\" //id https://api.ucloudbiz.olleh.com/gd1/image/images\r\n      }\r\n    ]\r\n//     \"user_data\": \"I2Nsb3VkLWNvbmZpZwpydW5jbWQ6CiAgLSBleHBvcnQgSzhTX0FQST0kKGhvc3RuYW1lIC1JIHwgYXdrICd7cHJpbnQgJDF9JykgICMgUmVwbGFjZSB3aXRoIHlvdXIgYWN0dWFsIEs4cyBBUEkgc2VydmVyIGFkZHJlc3MKICAtIGV4cG9ydCBJTlRFUk5BTElQPSQoaG9zdG5hbWUgLUkgfCBhd2sgJ3twcmludCAkMX0nKQogIC0gc2VkIC1pICJzfFwke0s4U19BUEl9fCRLOFNfQVBJfGciIC90bXAvaW5pdC1jb25maWcueWFtbAogIC0gc2VkIC1pICJzfFwke0lOVEVSTkFMSVB9fCRJTlRFUk5BTElQfGciIC90bXAvaW5pdC1jb25maWcueWFtbAogIC0gc3VkbyBrdWJlYWRtIGluaXQgLS1jb250cm9sLXBsYW5lLWVuZHBvaW50PSIke0lOVEVSTkFMSVB9OjY0NDMiIHx8IGVjaG8gImt1YmVhZG0gaW5pdCBmYWlsZWQiCiAgLSBpZiBbIC1mIC9ldGMva3ViZXJuZXRlcy9hZG1pbi5jb25mIF07IHRoZW4KICAgICAgbWtkaXIgLXAgL2hvbWUvdWJ1bnR1Ly5rdWJlOwogICAgICBjcCAtaSAvZXRjL2t1YmVybmV0ZXMvYWRtaW4uY29uZiAvaG9tZS91YnVudHUvLmt1YmUvY29uZmlnOwogICAgICBjaG93biAkKGlkIC11IHVidW50dSk6JChpZCAtZyB1YnVudHUpIC9ob21lL3VidW50dS8ua3ViZS9jb25maWc7CiAgICBlbHNlCiAgICAgIGVjaG8gImFkbWluLmNvbmYgbm90IGZvdW5kLiBrdWJlYWRtIGluaXQgbWF5IGhhdmUgZmFpbGVkLiI7CiAgICAgIGV4aXQ7CiAgICBmaSAKICAtIG1rZGlyIC1wIC90bXAvbWV0YWRhdGEKICAtIGNkIC90bXAvbWV0YWRhdGEKICAtIENBSEFTSD0kKG9wZW5zc2wgeDUwOSAtcHVia2V5IC1pbiAvZXRjL2t1YmVybmV0ZXMvcGtpL2NhLmNydCB8IG9wZW5zc2wgcnNhIC1wdWJpbiAtb3V0Zm9ybSBkZXIgMj4vZGV2L251bGwgfCBvcGVuc3NsIGRnc3QgLXNoYTI1NiAtaGV4IHwgc2VkICdzL14uKiAvLycpCiAgLSBUT0tFTj0kKGt1YmVhZG0gdG9rZW4gbGlzdCB8IGF3ayAnL2F1dGhlbnRpY2F0aW9uL3twcmludCAkMX0nKQogIC0gY3AgL2V0Yy9rdWJlcm5ldGVzL2FkbWluLmNvbmYgYWRtaW4uY29uZgogIC0gY3AgL2V0Yy9rdWJlcm5ldGVzL3BraS9ldGNkL2NhLmNydCBldGNkLWNhLmNydAogIC0gY3AgL2V0Yy9rdWJlcm5ldGVzL3BraS9ldGNkL2NhLmtleSBldGNkLWNhLmtleQogIC0gY3AgL2V0Yy9rdWJlcm5ldGVzL3BraS9jYS5jcnQgY2EuY3J0CiAgLSBjcCAvZXRjL2t1YmVybmV0ZXMvcGtpL2NhLmtleSBjYS5rZXkKICAtIGNwIC9ldGMva3ViZXJuZXRlcy9wa2kvZnJvbnQtcHJveHktY2EuY3J0IGZyb250LXByb3h5LWNhLmNydAogIC0gY3AgL2V0Yy9rdWJlcm5ldGVzL3BraS9mcm9udC1wcm94eS1jYS5rZXkgZnJvbnQtcHJveHktY2Eua2V5CiAgLSBjcCAvZXRjL2t1YmVybmV0ZXMvcGtpL3NhLmtleSBzYS5rZXkKICAtIGNwIC9ldGMva3ViZXJuZXRlcy9wa2kvc2EucHViIHNhLnB1YgogIC0gZWNobyAiJHtLOFNfQVBJfSAke0NBSEFTSH0gJHtUT0tFTn0iID4gazhzCiAgLSBweXRob24zIC1tIGh0dHAuc2VydmVyCg==\"\r\n  }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://api.ucloudbiz.olleh.com/gd1/server/servers",
+					"protocol": "https",
+					"host": [
+						"api",
+						"ucloudbiz",
+						"olleh",
+						"com"
+					],
+					"path": [
+						"gd1",
+						"server",
+						"servers"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get-vpc-network-details",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Auth-Token",
+						"value": "gAAAAABnbWHDwW71BDeDsqfkuVbpXe76k7kzIX_22EKJzrDEeHSIRcj5RIZYDQfcAUY17OIOXtz5_0Q8a2EXLMOZMNg-JAimFYziNJXrbWBpOaPyLIWdg7PjppiTZyGz2Fsc5T8cVs2xjv3HEJ8FGoqIIl326n1SVE7eXxOwBPmqdvQYnuiBZ7Q",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://api.ucloudbiz.olleh.com/gd1/nc/VPC",
+					"protocol": "https",
+					"host": [
+						"api",
+						"ucloudbiz",
+						"olleh",
+						"com"
+					],
+					"path": [
+						"gd1",
+						"nc",
+						"VPC"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get-images",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Auth-Token",
+						"value": "gAAAAABnbVGyBa-AJqy4ytgUuxDLaM21ecXWRj6FwtzcrVcPGABX21ICynphudFkByBcpWemCxt999W9Irf3mPjZAMK0R8mzMGHUQOI49t9RA9KRkO50WOTqLV6J6IujsrHU3AG8NLJF6kx_lyNNGCZr8VAske2KzTaQhXZJXAcZr9PRjn3OaKM",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://api.ucloudbiz.olleh.com/gd1/image/images",
+					"protocol": "https",
+					"host": [
+						"api",
+						"ucloudbiz",
+						"olleh",
+						"com"
+					],
+					"path": [
+						"gd1",
+						"image",
+						"images"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create SNATs",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Auth-Token",
+						"value": "gAAAAABnakDBxgve64oHwMumthdrO3v9lD6GDUxXV44_p6_gWhw21sPH36YAlrmKQqGFFKYjn0iDmg5yx1T4yPVRBuHSu55FAgmCnuWJ-tldX1WvolDsqQleWN7N67sJ140wFC_XTBKTU_afB7UMDSC-TWbWlLrYyqsrjqQLHxLy7CmZVZ6Vp98",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"vmguestip\": \"172.25.0.95\", //server.addresses.tier(DMZ).addr\r\n  \"vmnetworkid\": \"7031a1e3-7435-4cd2-9087-671a995f3bbd\", // https://api.ucloudbiz.olleh.com/gd1/nc/Network id VM.network.id\r\n  \"entpublicipid\": \"5c913acd-7537-452c-90e2-e302b30d9733\" // https://api.ucloudbiz.olleh.com/gd1/nc/IpAddress id\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://api.ucloudbiz.olleh.com/gd1/nc/StaticNat",
+					"protocol": "https",
+					"host": [
+						"api",
+						"ucloudbiz",
+						"olleh",
+						"com"
+					],
+					"path": [
+						"gd1",
+						"nc",
+						"StaticNat"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get-server-details",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Auth-Token",
+						"value": "gAAAAABndgKMmdX2Nm1HrzQxr0GExtoLxQVAgxbdihqJYJUm3d13tPb7yCmyRWJjnbNQO7GGtVyO_KAiModnq47Gcz2OdQz2K-LOiRYvYibb0VAjQAJxcUCY1qSxG2UK3E3Wab6v9NDhnW7sVW6xMFRlqzfcDmbczbrlPmOQaezgrNi8rlmSwRw",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://api.ucloudbiz.olleh.com/gd1/server/servers/f17979d1-f9f1-4886-9e75-3141c38978f4",
+					"protocol": "https",
+					"host": [
+						"api",
+						"ucloudbiz",
+						"olleh",
+						"com"
+					],
+					"path": [
+						"gd1",
+						"server",
+						"servers",
+						"f17979d1-f9f1-4886-9e75-3141c38978f4"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get IPAddresses",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Auth-Token",
+						"value": "gAAAAABnbXDIWSJML8hKt5cDx3V95xyQzpWVfNcPWRYZCZ_pvGjUJYeNSe_4I2nzknuidyWeS_cmz9sqNFy-kAVkGsA-Vx16CPjW0sG6heiBiJnizI18iQ0r2HQo3mOk96QrgOp1ChOD_mExCMrQ6MbSZffP4GuWMQ13G5VDzZ4c5MyJNn8ehx4",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"server\": {\r\n        \"tenant_id\": \"a3059c537a6946819ba8fbaef31bf313\",\r\n        \"metadata\": {},\r\n        \"addresses\": {\r\n            \"DMZ\": [\r\n                {\r\n                    \"OS-EXT-IPS-MAC:mac_addr\": \"fa:16:3e:83:85:ee\",\r\n                    \"OS-EXT-IPS:type\": \"fixed\",\r\n                    \"addr\": \"172.25.0.176\",\r\n                    \"version\": 4\r\n                }\r\n            ]\r\n        },\r\n        \"OS-EXT-STS:task_state\": null,\r\n        \"description\": null,\r\n        \"OS-DCF:diskConfig\": \"MANUAL\",\r\n        \"trusted_image_certificates\": null,\r\n        \"OS-EXT-AZ:availability_zone\": \"DX-G\",\r\n        \"links\": [\r\n            {\r\n                \"rel\": \"self\",\r\n                \"href\": \"https://api-proxy.gcloud.kt.com/v2.1/servers/991f1bf2-c0cf-4566-9d6a-0d64419bc7c5\"\r\n            },\r\n            {\r\n                \"rel\": \"bookmark\",\r\n                \"href\": \"https://api-proxy.gcloud.kt.com/servers/991f1bf2-c0cf-4566-9d6a-0d64419bc7c5\"\r\n            }\r\n        ],\r\n        \"OS-EXT-STS:power_state\": 1,\r\n        \"id\": \"991f1bf2-c0cf-4566-9d6a-0d64419bc7c5\",\r\n        \"os-extended-volumes:volumes_attached\": [\r\n            {\r\n                \"delete_on_termination\": true,\r\n                \"id\": \"bac9f844-86fd-4458-8541-567694d8a0e7\"\r\n            }\r\n        ],\r\n        \"locked\": false,\r\n        \"image\": \"\",\r\n        \"accessIPv4\": \"\",\r\n        \"OS-SRV-USG:terminated_at\": null,\r\n        \"accessIPv6\": \"\",\r\n        \"created\": \"2024-12-22T09:00:43Z\",\r\n        \"hostId\": \"13a8a4b1094b0ea945e2a5f4793a2d8b38ea7121a80461c4ab87b850\",\r\n        \"tags\": [\r\n            \"server\"\r\n        ],\r\n        \"flavor\": {\r\n            \"disk\": 0,\r\n            \"swap\": 0,\r\n            \"original_name\": \"1x2.itl\",\r\n            \"extra_specs\": {\r\n                \"aggregate_instance_extra_specs:itl\": \"true\"\r\n            },\r\n            \"ephemeral\": 0,\r\n            \"vcpus\": 1,\r\n            \"ram\": 2048\r\n        },\r\n        \"key_name\": \"test1\",\r\n        \"security_groups\": [\r\n            {\r\n                \"name\": \"default\"\r\n            }\r\n        ],\r\n        \"config_drive\": \"\",\r\n        \"OS-EXT-STS:vm_state\": \"active\",\r\n        \"user_id\": \"c068b43ee92c45ce8063c67a2549ca15\",\r\n        \"name\": \"edge01-control-plane-4znrzdxz6o\",\r\n        \"progress\": 0,\r\n        \"OS-SRV-USG:launched_at\": \"2024-12-22T09:01:19.000000\",\r\n        \"updated\": \"2024-12-22T09:01:19Z\",\r\n        \"status\": \"ACTIVE\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://api.ucloudbiz.olleh.com/gd1/nc/IpAddress",
+					"protocol": "https",
+					"host": [
+						"api",
+						"ucloudbiz",
+						"olleh",
+						"com"
+					],
+					"path": [
+						"gd1",
+						"nc",
+						"IpAddress"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "firewall-settings",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "X-Auth-Token",
+						"value": "gAAAAABndpW5xsk01-Tz9UjWoMqkPwWSpwUxIV6o7Wk3Ri23nerI3vJHU43m7QFesCOCCAdLeY84U4p3DueF8XjRxmmVTtCC0_0UZWsiUs_U5jhvShNijjUkXRGH8ivRePXjgV4rZh5xJda2KvQFjZQMJvOYKAnK3db0XBWEkWVubwnOkoguDCc",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"startport\": \"1\",\r\n    \"endport\": \"65535\",\r\n    \"action\": \"allow\",\r\n    \"protocol\": \"ALL\",\r\n    \"dstip\": \"0.0.0.0/0\",\r\n    \"virtualipid\": \"c92d61fd-1008-4cad-921e-12feb94f88acd\", // port forwarding id MAYBE server IPaddress ID\r\n    \"srcnetworkid\": \"d467c349-e14f-4a7a-bc39-015e6eed630e\", // https://api.ucloudbiz.olleh.com/gd1/nc/VPC nc_listvpcsresponse.vpcs.networks.\r\n    \"dstnetworkid\": \"2a8fb355-e70e-4d00-ad61-879e68eb9fff\" //the is the network ID https://api.ucloudbiz.olleh.com/gd1/nc/Network\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://api.ucloudbiz.olleh.com/gd1/nc/Firewall",
+					"protocol": "https",
+					"host": [
+						"api",
+						"ucloudbiz",
+						"olleh",
+						"com"
+					],
+					"path": [
+						"gd1",
+						"nc",
+						"Firewall"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "https://api.ucloudbiz.olleh.com/gd1/nc/Etc?command=queryAsyncJob&jobid=47ee115f-82bd-4017-a7f7-952e69b53cde",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Auth-Token",
+						"value": "gAAAAABndqmjnngsMUlpCLaozHibgecvPCd8Ml_RDD4J9E2tj9xzqngo48nLW4aYZWyhCFE5uY9Ws5L36m2NiTnxI8qAyRER6rYWiYVQOl8uQ5nbMLk3ruarS2YW5d7RqXHGbsG7BkeDnbTqQih50ka9YW27_PKDLIH7X-iFE4ciB0rvG6d0_hM",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"startport\": \"1\",\r\n    \"endport\": \"65535\",\r\n    \"action\": \"allow\",\r\n    \"protocol\": \"ALL\",\r\n    \"dstip\": \"0.0.0.0/0\",\r\n    \"virtualipid\": \"c92d61fd-1008-4cad-921e-12feb94f88acd\", // port forwarding id MAYBE server IPaddress ID\r\n    \"srcnetworkid\": \"d467c349-e14f-4a7a-bc39-015e6eed630e\", // https://api.ucloudbiz.olleh.com/gd1/nc/VPC nc_listvpcsresponse.vpcs.networks.\r\n    \"dstnetworkid\": \"2a8fb355-e70e-4d00-ad61-879e68eb9fff\" //the is the network ID https://api.ucloudbiz.olleh.com/gd1/nc/Network\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://api.ucloudbiz.olleh.com/gd1/nc/Etc?command=queryAsyncJob&jobid=47ee115f-82bd-4017-a7f7-952e69b53cde",
+					"protocol": "https",
+					"host": [
+						"api",
+						"ucloudbiz",
+						"olleh",
+						"com"
+					],
+					"path": [
+						"gd1",
+						"nc",
+						"Etc"
+					],
+					"query": [
+						{
+							"key": "command",
+							"value": "queryAsyncJob"
+						},
+						{
+							"key": "jobid",
+							"value": "47ee115f-82bd-4017-a7f7-952e69b53cde"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "id",
+			"value": "1"
+		},
+		{
+			"key": "base_url",
+			"value": "https://postman-rest-api-learner.glitch.me/"
+		}
+	]
+}
