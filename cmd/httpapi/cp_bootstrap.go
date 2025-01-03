@@ -14,7 +14,7 @@ func CheckControlPlaneMachineReady(machine *v1beta1.KTMachine) error {
 	apiURL := "http://" + machine.Status.AssignedPublicIps[0].IP + ":8000"
 
 	// Set up the HTTP client
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 30 * time.Second}
 
 	// Create a new HTTP GET request
 	req, err := http.NewRequest("GET", apiURL, bytes.NewBuffer([]byte{}))

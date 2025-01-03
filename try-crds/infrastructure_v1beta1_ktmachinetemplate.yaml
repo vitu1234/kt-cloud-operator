@@ -4,7 +4,7 @@ metadata:
   labels:
     app.kubernetes.io/name: kt-cloud-operator
     app.kubernetes.io/managed-by: kustomize
-  name: edge01-control-plane
+  name: ${CLUSTER_NAME}-control-plane
 spec:
   template:
     spec:
@@ -25,7 +25,7 @@ metadata:
   labels:
     app.kubernetes.io/name: kt-cloud-operator
     app.kubernetes.io/managed-by: kustomize
-  name: edge01-md-0
+  name: ${CLUSTER_NAME}-md-0
 spec:
   template:
     spec:

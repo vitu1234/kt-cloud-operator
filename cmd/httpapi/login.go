@@ -129,7 +129,7 @@ func KTCloudLogin() {
 	apiURL := Config.ApiBaseURL + Config.Zone + "/identity/auth/tokens"
 
 	// Set up HTTP client with timeout
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 30 * time.Second}
 
 	// Create a new HTTP POST request
 	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(payload))
