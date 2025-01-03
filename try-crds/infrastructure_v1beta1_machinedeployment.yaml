@@ -8,15 +8,15 @@ metadata:
 spec:
   type: control-plane
   replicas: 1
-  selector:
-    matchLabels: null
+  # selector:
+  #   matchLabels: null
   template:
     spec:
-      bootstrap:
-        configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
-          kind: KubeadmConfigTemplate
-          name: openstack-nephio-md-0
+      # bootstrap:
+      #   configRef:
+      #     apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+      #     kind: KubeadmConfigTemplate
+      #     name: openstack-nephio-md-0
       clusterName: ${CLUSTER_NAME}
       failureDomain: DX-G
       infrastructureRef:
@@ -35,15 +35,15 @@ metadata:
 spec:
   type: worker
   replicas: 1
-  selector:
-    matchLabels: null
+  # selector:
+  #   matchLabels: null
   template:
     spec:
-      bootstrap:
-        configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
-          kind: KubeadmConfigTemplate
-          name: openstack-nephio-md-0
+      # bootstrap:
+      #   configRef:
+      #     apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+      #     kind: KubeadmConfigTemplate
+      #     name: openstack-nephio-md-0
       clusterName: ${CLUSTER_NAME}
       failureDomain: DX-G
       infrastructureRef:

@@ -6,11 +6,11 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: ${CLUSTER_NAME}
 spec:
-  apiServerLoadBalancer:
-    enabled: false
+  # apiServerLoadBalancer:
+  #   enabled: false
   controlPlaneExternalNetworkEnable: true
   identityRef:
-    cloudName: openstack
+    # cloudName: openstack
     name: ${CLUSTER_NAME}-cloud-config
   managedSecurityGroups:
     enableOutboundInternetTraffic: true 
