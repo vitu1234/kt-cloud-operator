@@ -4,7 +4,7 @@ metadata:
   labels:
     app.kubernetes.io/name: kt-cloud-operator
     app.kubernetes.io/managed-by: kustomize
-  name: edge01
+  name: ${CLUSTER_NAME}
 spec:
   # TODO(user): Add fields here
   foo: vitru

@@ -120,7 +120,7 @@ runcmd:
 	apiURL := Config.ApiBaseURL + Config.Zone + "/server/servers"
 
 	// Set up the HTTP client
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 30 * time.Second}
 
 	// Create a new HTTP POST request
 	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(jsonData))

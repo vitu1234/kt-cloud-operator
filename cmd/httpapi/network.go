@@ -222,7 +222,7 @@ func AttachPublicIP(machine *v1beta1.KTMachine, token string) error {
 
 	// Set up HTTP client with timeout
 	// Set up the HTTP client
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 30 * time.Second}
 
 	// Create a new HTTP POST request
 	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(payload))
@@ -321,7 +321,7 @@ func GetAvailablePublicIpAddresses(token string) (NcListentPublicIpsResponse, er
 	apiURL := Config.ApiBaseURL + Config.Zone + "/nc/IpAddress"
 
 	// Set up the HTTP client
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 30 * time.Second}
 
 	// Create a new HTTP GET request
 	req, err := http.NewRequest("GET", apiURL, bytes.NewBuffer([]byte{}))
@@ -400,7 +400,7 @@ func GetAssignedPublicIpAddresses(token string) (NcListentPublicIpsResponse, err
 	apiURL := Config.ApiBaseURL + Config.Zone + "/nc/IpAddress"
 
 	// Set up the HTTP client
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 30 * time.Second}
 
 	// Create a new HTTP GET request
 	req, err := http.NewRequest("GET", apiURL, bytes.NewBuffer([]byte{}))
@@ -485,7 +485,7 @@ func GetNetworkIdByName(token, network_name string) (NetworkData, error) {
 	apiURL := Config.ApiBaseURL + Config.Zone + "/nc/Network"
 
 	// Set up the HTTP client
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 30 * time.Second}
 
 	// Create a new HTTP GET request
 	req, err := http.NewRequest("GET", apiURL, bytes.NewBuffer([]byte{}))
@@ -555,7 +555,7 @@ func GetListVpcNetworks(token string) ([]NetworkData, error) {
 	apiURL := Config.ApiBaseURL + Config.Zone + "/nc/VPC"
 
 	// Set up the HTTP client
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 30 * time.Second}
 
 	// Create a new HTTP GET request
 	req, err := http.NewRequest("GET", apiURL, bytes.NewBuffer([]byte{}))
@@ -700,7 +700,7 @@ func AddFirewallSettings(machine *v1beta1.KTMachine, token string, securityGroup
 
 	// Set up HTTP client with timeout
 	// Set up the HTTP client
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 30 * time.Second}
 
 	// Create a new HTTP POST request
 	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(payload))
@@ -909,7 +909,7 @@ func GetNetworkingJobId(token, job_id, job_type string) (string, error) {
 	apiURL := Config.ApiBaseURL + Config.Zone + "/nc/Etc?command=queryAsyncJob&jobid=" + job_id
 
 	// Set up the HTTP client
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 30 * time.Second}
 
 	// Create a new HTTP GET request
 	req, err := http.NewRequest("GET", apiURL, bytes.NewBuffer([]byte{}))

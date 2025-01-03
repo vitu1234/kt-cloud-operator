@@ -61,7 +61,7 @@ func DeleteVM(machine *v1beta1.KTMachine, token string) error {
 	apiURL := Config.ApiBaseURL + Config.Zone + "/server/servers/" + machine.Status.ID + "/action"
 
 	// Set up the HTTP client
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 30 * time.Second}
 
 	// Create a new HTTP GET request
 	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(jsonData))
@@ -120,7 +120,7 @@ func GetCreatedVM(machine *v1beta1.KTMachine, token string) (*v1beta1.KTMachineS
 	apiURL := Config.ApiBaseURL + Config.Zone + "/server/servers/" + machine.Status.ID
 
 	// Set up the HTTP client
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 30 * time.Second}
 
 	// Create a new HTTP GET request
 	req, err := http.NewRequest("GET", apiURL, bytes.NewBuffer([]byte{}))
@@ -261,7 +261,7 @@ func DeleteFirewallOnCloud(jobId, token string) error {
 	apiURL := Config.ApiBaseURL + Config.Zone + "/nc/Firewall/" + jobId
 
 	// Set up the HTTP client
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 30 * time.Second}
 
 	// Create a new HTTP GET request
 	req, err := http.NewRequest("DELETE", apiURL, bytes.NewBuffer([]byte{}))
@@ -317,7 +317,7 @@ func DeleteStaticNatOnCloud(staticNatId, token string) any {
 	apiURL := Config.ApiBaseURL + Config.Zone + "/nc/StaticNat/" + staticNatId
 
 	// Set up the HTTP client
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 30 * time.Second}
 
 	// Create a new HTTP DELETE request
 	req, err := http.NewRequest("DELETE", apiURL, bytes.NewBuffer([]byte{}))
