@@ -4,9 +4,9 @@ metadata:
   labels:
     app.kubernetes.io/name: kt-cloud-operator
     app.kubernetes.io/managed-by: kustomize
-  name: kt-cluster1
+  name: ${CLUSTER_NAME}
 spec:
-  subjectToken: gAAAAABofeX3Ot-fHuYQwGzKpCofuriJSVXuOQ4UqgNNZ6JTdPPrbmMwZwQhGmoM6ajKUAQpkVAi-q6xw17ehyPhPBog-3HiRfJOEBA1Y9WP0ZMwwJqM8QkZJRVq6xvO-sX9uKbCzlB_1asb_PQGF-CSN_fJKfRuxaUW2j_1hVTHbU3YFPZ3-Tc
+  subjectToken: ${SUBJECT_TOKEN}
   token:
     expiresAt: "2024-12-18T03:47:08.000000Z"
 

@@ -73,9 +73,9 @@ This is an kubernetes operator used create a Kubernetes cluster on KT Cloud [her
 ##### Sample CRDs
 
 * starting with try-crds/infrastructure_v1beta1_ktmachinetemplate.yaml, we have to modify the flavor, blockDeviceMapping, network tier and ssh key
-  * For flavor, we have to use an API directly because it is not provided in the cloud console follow the guide on this [page](https://cloud.kt.com/docs/open-api-guide/d/computing/virtual-machine), on this API endpoint: https://api.ucloudbiz.olleh.com/d1/server/flavors/detail
+  * For flavor, we have to use an API directly because it is not provided in the cloud console follow the guide on this [page](https://cloud.kt.com/docs/open-api-guide/d/computing/virtual-machine), on this API endpoint: https://api.ucloudbiz.olleh.com/gd1/server/flavors/detail
   * The blockingDeviceMapping data, can be taken from the console in servers/Image, click on the preferred image then information and get its ID. The other variables can be customized based on requirements
-  * The networkTier.id is taken from this GET API: [https://api.ucloudbiz.olleh.com/gd1/nc/Network](https://api.ucloudbiz.olleh.com/gd1/nc/Network)
+  * The networkTier.id is taken from this GET API: [https://api.ucloudbiz.olleh.com/gd1/nc/Network](https://api.ucloudbiz.olleh.com/gd1/nsm/v1/network)
   * The ssh keyname is the one which was created and downloaded earlier
 * For the try-crds/infrastructure_v1beta1_machinedeployment.yaml, we have to modify the clusters, replicas failure domain matching the availability zone in KT cloud.
   * if the template if for the control-plane, put spec.type as control-plane otherwise worker
@@ -91,3 +91,6 @@ This is an kubernetes operator used create a Kubernetes cluster on KT Cloud [her
 ```
 	"error": "Get \"http://${public_ip}:8000\": dial tcp 211.57.84.211:8000: connect: connection refused"}
 ```
+
+
+

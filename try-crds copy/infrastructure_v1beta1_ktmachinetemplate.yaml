@@ -4,20 +4,20 @@ metadata:
   labels:
     app.kubernetes.io/name: kt-cloud-operator
     app.kubernetes.io/managed-by: kustomize
-  name: kt-cluster1-control-plane
+  name: ${CLUSTER_NAME}-control-plane
 spec:
   template:
     spec:
-      flavor: cc39e701-1d52-475d-b4cb-5b61f2216239 #"2x4.itl"
+      flavor: 704ee1ca-4720-4f6a-b05a-669060940186
       blockDeviceMapping:
-        - id: 6c71bd64-0145-4845-9078-10fdff71ce0e 
+        - id: ece8ab48-0752-4de0-bf93-f189c60946de
           bootIndex: 0
           sourceType: image
           volumeSize: 50
           destinationType: volume
       networkTier:
-        - id: 2a8fb355-e70e-4d00-ad61-879e68eb9fff
-      sshKeyName: kt-cloud-nephio
+        - id: 7031a1e3-7435-4cd2-9087-671a995f3bbd
+      sshKeyName: test1
 ---
 apiVersion: infrastructure.dcnlab.ssu.ac.kr/v1beta1
 kind: KTMachineTemplate
@@ -25,17 +25,17 @@ metadata:
   labels:
     app.kubernetes.io/name: kt-cloud-operator
     app.kubernetes.io/managed-by: kustomize
-  name: kt-cluster1-md-0
+  name: ${CLUSTER_NAME}-md-0
 spec:
   template:
     spec:
-      flavor: cc39e701-1d52-475d-b4cb-5b61f2216239
+      flavor: 704ee1ca-4720-4f6a-b05a-669060940186
       blockDeviceMapping:
-        - id: 6c71bd64-0145-4845-9078-10fdff71ce0e
+        - id: ece8ab48-0752-4de0-bf93-f189c60946de
           bootIndex: 0
           sourceType: image
           volumeSize: 50
           destinationType: volume
       networkTier:
-        - id: 2a8fb355-e70e-4d00-ad61-879e68eb9fff
-      sshKeyName: kt-cloud-nephio
+        - id: 7031a1e3-7435-4cd2-9087-671a995f3bbd
+      sshKeyName: test1
