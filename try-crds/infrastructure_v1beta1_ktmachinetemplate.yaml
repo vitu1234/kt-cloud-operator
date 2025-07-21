@@ -16,7 +16,7 @@ spec:
           volumeSize: 50
           destinationType: volume
       networkTier:
-        - id: 2a8fb355-e70e-4d00-ad61-879e68eb9fff
+        - id: 7031a1e3-7435-4cd2-9087-671a995f3bbd
       sshKeyName: kt-cloud-nephio
 ---
 apiVersion: infrastructure.dcnlab.ssu.ac.kr/v1beta1
@@ -29,13 +29,13 @@ metadata:
 spec:
   template:
     spec:
-      flavor: cc39e701-1d52-475d-b4cb-5b61f2216239
+      flavor: cc39e701-1d52-475d-b4cb-5b61f2216239 #id on https://api.ucloudbiz.olleh.com/gd1/server/flavors/detail
       blockDeviceMapping:
-        - id: 6c71bd64-0145-4845-9078-10fdff71ce0e
+        - id: 6c71bd64-0145-4845-9078-10fdff71ce0e # id on https://api.ucloudbiz.olleh.com/gd1/image/images
           bootIndex: 0
           sourceType: image
           volumeSize: 50
           destinationType: volume
       networkTier:
-        - id: 2a8fb355-e70e-4d00-ad61-879e68eb9fff
+        - id: 7031a1e3-7435-4cd2-9087-671a995f3bbd #refId on https://api.ucloudbiz.olleh.com/gd1/nsm/v1/network
       sshKeyName: kt-cloud-nephio

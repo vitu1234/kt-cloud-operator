@@ -19,147 +19,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type PublicNetwork struct {
-	NcListentPublicIpsResponse NcListentPublicIpsResponse `json:"nc_listentpublicipsresponse"`
-}
-
-type NcListentPublicIpsResponse struct {
-	PublicIps []PublicIp `json:"publicips"`
-}
-
-type PublicIp struct {
-	EntPublicCIDRId string      `json:"entpubliccidrid"`
-	VirtualIps      []VirtualIp `json:"virtualips"`
-	VPCId           string      `json:"vpcid"`
-	IP              string      `json:"ip"`
-	ZoneId          string      `json:"zoneid"`
-	Id              string      `json:"id"`
-	Type            string      `json:"type"`
-	Account         string      `json:"account"`
-}
-
-type VirtualIp struct {
-	VMGuestIP   string `json:"vmguestip"`
-	IPAddress   string `json:"ipaddress"`
-	VPCId       string `json:"vpcid"`
-	IPAddressId string `json:"ipaddressid"`
-	Name        string `json:"name"`
-	NetworkId   string `json:"networkid"`
-	Id          string `json:"id"`
-}
-
-// Post Request Payload attach nat
-type PostPayload struct {
-	VMGuestIP     string `json:"vmguestip"`
-	VMNetworkId   string `json:"vmnetworkid"`
-	EntPublicIPId string `json:"entpublicipid"`
-}
-
-// POst payload for Firewall settings
-type PostPayloadFirewallSettings struct {
-	StartPort    string `json:"startport"`
-	EndPort      string `json:"endport"`
-	Action       string `json:"action"`
-	Protocol     string `json:"protocol"`
-	DstIp        string `json:"dstip"`
-	VirtualIPId  string `json:"virtualipid"`
-	SrcNetworkId string `json:"srcnetworkid"`
-	DstNetworkId string `json:"dstnetworkid"`
-}
-
-type MachinePrivateAddresses struct {
-	NetworkName string `json:"networkname"`
-	Address     string `json:"address"`
-}
-
-// attach NAT response
-type NATAttachResponse struct {
-	NcEnableStaticNatResponse NcEnableStaticNatResponse `json:"nc_enablestaticnatresponse"`
-}
-
-type NcEnableStaticNatResponse struct {
-	DisplayText string `json:"displaytext"`
-	Success     bool   `json:"success"`
-	Id          string `json:"id"`
-}
-
-// create firewall settings response
-type AddFirewallSettingsResponse struct {
-	NcCreateFirewallRuleResponse NcCreateFirewallRuleResponse `json:"nc_createfirewallruleresponse"`
-}
-
-type NcCreateFirewallRuleResponse struct {
-	DisplayText string `json:"displaytext"`
-	Success     bool   `json:"success"`
-	JobId       string `json:"job_id"`
-}
-
-// get networks response
-type ListNetworksResponse struct {
-	NcListOsNetworksResponse NcListOsNetworksResponse `json:"nc_listosnetworksresponse"`
-}
-type NcListOsNetworksResponse struct {
-	Networks []NetworkData `json:"networks"`
-}
-
-type NetworkData struct {
-	EndIP string `json:"endip"`
-	// Shared  string `json:"shared"`
-	StartIP string `json:"startip"`
-	Type    string `json:"type"`
-	SSLVPN  string `json:"sslvpn"`
-	VLAN    string `json:"vlan"`
-	// EntPublicCIDRs []string `json:"entpubliccidrs"`
-	Netmask       string `json:"netmask"`
-	VPCID         string `json:"vpcid"`
-	Name          string `json:"name"`
-	MainNetworkID string `json:"mainnetworkid"`
-	ZoneID        string `json:"zoneid"`
-	DataLakeYN    string `json:"datalakeyn"`
-	CIDR          string `json:"cidr"`
-	ID            string `json:"id"`
-	ProjectID     string `json:"projectid"`
-	Gateway       string `json:"gateway"`
-	ISCSIStartIP  string `json:"iscsistartip"`
-	ISCSIEndIP    string `json:"iscsiendip"`
-	Account       string `json:"account"`
-	OSNetworkID   string `json:"osnetworkid"`
-	Status        string `json:"status"`
-}
-
-type ListVpcsResponse struct {
-	NcListVpcResponse NcListVpcResponse `json:"nc_listvpcsresponse"`
-}
-type NcListVpcResponse struct {
-	Vpcs []Vpc `json:"vpcs"`
-}
-
-type Vpc struct {
-	Networks []NetworkData `json:"networks"`
-}
-
-// list VPC response
-type NcListVPCResponse struct {
-	Networks []NetworkData `json:"networks"`
-}
-
-// Response for getting networking Job Ids
-type QueryAsyncJobResultResponse struct {
-	NcQueryAsyncJobResultResponse NcQueryAsyncJobResultResponse `json:"nc_queryasyncjobresultresponse"`
-}
-
-type NcQueryAsyncJobResultResponse struct {
-	Result Result `json:"result"`
-	// State  string `json:"state"`
-}
-
-type Result struct {
-	IPAddress   string `json:"ipaddress"`
-	DisplayText string `json:"displaytext"`
-	Success     bool   `json:"success"`
-	ID          string `json:"id"`
-}
-
 func AttachPublicIP(machine *v1beta1.KTMachine, token string) error {
 
 	var machinePrivateAddresses []MachinePrivateAddresses
@@ -185,13 +44,26 @@ func AttachPublicIP(machine *v1beta1.KTMachine, token string) error {
 	networkName := machinePrivateAddresses[0].NetworkName //just get the first IP address
 	vmnetworkid := machine.Spec.NetworkTier[0].ID         //just get the first tier
 
-	networkData, err := GetNetworkIdByName(token, networkName)
+	networkData, err := GetNetworkAllNetworks(token)
 
 	if err != nil {
 		return err
 	}
-	if networkData.ID == "" {
-		return errors.New("failed to retrieve network data by network name")
+	if len(networkData) == 0 {
+		return errors.New("failed to retrieve network data from cloud api call in the VPC, maybe try creating a network in the cloud in same zone as the cluster")
+	}
+
+	// find the network ID by looping through the networkData
+	var networkID string
+	for _, network := range networkData {
+
+		if network.Name == networkName {
+			networkID = network.ID
+			break
+		}
+	}
+	if networkID == "" {
+		return errors.New("failed to find network ID for network name: " + networkName)
 	}
 
 	publicIPs, err := GetAvailablePublicIpAddresses(token)
@@ -315,86 +187,66 @@ func AttachPublicIP(machine *v1beta1.KTMachine, token string) error {
 }
 
 // get all unassigned public IPs
-func GetAvailablePublicIpAddresses(token string) (NcListentPublicIpsResponse, error) {
+func GetAvailablePublicIpAddresses(token string) ([]PublicIp, error) {
 
 	// Define the API URL
-	apiURL := Config.ApiBaseURL + Config.Zone + "/nc/IpAddress"
+	apiURL := Config.ApiBaseURL + Config.Zone + "/nsm/v1/publicIp"
 
 	// Set up the HTTP client
 	client := &http.Client{Timeout: 30 * time.Second}
 
 	// Create a new HTTP GET request
-	req, err := http.NewRequest("GET", apiURL, bytes.NewBuffer([]byte{}))
+	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
-		logger1.Error("Error creating GET VM request:", err)
-		return NcListentPublicIpsResponse{}, err
+		logger1.Error("Error creating GET request:", err)
+		return nil, err
 	}
 
 	// Add headers
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Auth-Token", token) // Replace with actual token
+	req.Header.Set("X-Auth-Token", token)
 
 	// Send the request
 	resp, err := client.Do(req)
 	if err != nil {
 		logger1.Error("Error sending request:", err)
-		return NcListentPublicIpsResponse{}, err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
-	// Handle the response
-	fmt.Println("Response Status:", resp.Status)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		logger1.Error("Error reading response body:", err)
-		return NcListentPublicIpsResponse{}, err
+		return nil, err
 	}
 
-	// logger1.Info("-----------------------------------------")
-	// logger1.Info("Response Body Networks:", string(body))
-	// logger1.Info("********************************")
-
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		logger1.Info("GET request successful and got machine!")
-		// Parse the JSON into the struct
-		var serverResponse PublicNetwork
+		logger1.Info("GET request successful and received public IPs!")
+
+		var serverResponse NcListentPublicIpsResponse
 		err = json.Unmarshal(body, &serverResponse)
 		if err != nil {
 			logger1.Error("Error unmarshaling JSON response:", err)
-			return NcListentPublicIpsResponse{}, err
+			return nil, err
 		}
 
-		filteredResponse := NcListentPublicIpsResponse{}
-		filteredPublicIps := []PublicIp{}
-		for i := 0; i < len(serverResponse.NcListentPublicIpsResponse.PublicIps); i++ {
-			publicIps := serverResponse.NcListentPublicIpsResponse.PublicIps
-			if len(publicIps[i].VirtualIps) == 0 && publicIps[i].Type == "ASSOCIATE" {
-				publicIP := PublicIp{
-					EntPublicCIDRId: publicIps[i].EntPublicCIDRId,
-					VirtualIps:      publicIps[i].VirtualIps,
-					VPCId:           publicIps[i].VPCId,
-					IP:              publicIps[i].IP,
-					ZoneId:          publicIps[i].ZoneId,
-					Type:            publicIps[i].Type,
-					Id:              publicIps[i].Id,
-					Account:         publicIps[i].Account,
-				}
-				filteredPublicIps = append(filteredPublicIps, publicIP)
+		filteredIps := []PublicIp{}
+		for _, ip := range serverResponse.Data {
+			if ip.Type == "ASSOCIATE" {
+				filteredIps = append(filteredIps, ip)
 			}
 		}
-		filteredResponse.PublicIps = filteredPublicIps
 
-		return filteredResponse, nil
+		return filteredIps, nil
 
 	} else {
 		logger1.Error("GET request failed with status:", resp.Status)
-		return NcListentPublicIpsResponse{}, errors.New("GET request failed with status: " + resp.Status)
+		return nil, errors.New("GET request failed with status: " + resp.Status)
 	}
-
 }
 
 // get all assigned public IPs
-func GetAssignedPublicIpAddresses(token string) (NcListentPublicIpsResponse, error) {
+func GetAssignedPublicIpAddresses(token string) ([]PublicIp, error) {
 
 	// Define the API URL
 	apiURL := Config.ApiBaseURL + Config.Zone + "/nc/IpAddress"
@@ -403,102 +255,69 @@ func GetAssignedPublicIpAddresses(token string) (NcListentPublicIpsResponse, err
 	client := &http.Client{Timeout: 30 * time.Second}
 
 	// Create a new HTTP GET request
-	req, err := http.NewRequest("GET", apiURL, bytes.NewBuffer([]byte{}))
+	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
-		logger1.Error("Error creating GET VM request:", err)
-		return NcListentPublicIpsResponse{}, err
+		logger1.Error("Error creating GET request:", err)
+		return nil, err
 	}
 
 	// Add headers
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Auth-Token", token) // Replace with actual token
+	req.Header.Set("X-Auth-Token", token)
 
 	// Send the request
 	resp, err := client.Do(req)
 	if err != nil {
 		logger1.Error("Error sending request:", err)
-		return NcListentPublicIpsResponse{}, err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
-	// Handle the response
-	// fmt.Println("Response Status:", resp.Status)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		logger1.Error("Error reading response body:", err)
-		return NcListentPublicIpsResponse{}, err
+		return nil, err
 	}
 
-	// logger1.Info("-----------------------------------------")
-	// logger1.Info("Response Body Networks:", string(body))
-	// logger1.Info("********************************")
-
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		logger1.Info("GET request successful and got machine!")
-		// Parse the JSON into the struct
-		var serverResponse PublicNetwork
+		logger1.Info("GET request successful and received public IPs!")
+
+		var serverResponse NcListentPublicIpsResponse
 		err = json.Unmarshal(body, &serverResponse)
 		if err != nil {
 			logger1.Error("Error unmarshaling JSON response:", err)
-			return NcListentPublicIpsResponse{}, err
+			return nil, err
 		}
 
-		filteredResponse := NcListentPublicIpsResponse{}
-		filteredPublicIps := []PublicIp{}
-
-		publicIps := serverResponse.NcListentPublicIpsResponse.PublicIps
-
-		for i := 0; i < len(serverResponse.NcListentPublicIpsResponse.PublicIps); i++ {
-
-			if len(publicIps[i].VirtualIps) > 0 && publicIps[i].Type == "STATICNAT" {
-
-				// logger1.Info("For loop "+strconv.Itoa(i), publicIps)
-
-				publicIP := PublicIp{
-					EntPublicCIDRId: publicIps[i].EntPublicCIDRId,
-					VirtualIps:      publicIps[i].VirtualIps,
-					VPCId:           publicIps[i].VPCId,
-					IP:              publicIps[i].IP,
-					ZoneId:          publicIps[i].ZoneId,
-					Type:            publicIps[i].Type,
-					Id:              publicIps[i].Id,
-					Account:         publicIps[i].Account,
-				}
-				filteredPublicIps = append(filteredPublicIps, publicIP)
+		filteredIps := []PublicIp{}
+		for _, ip := range serverResponse.Data {
+			if ip.Type == "STATICNAT" && len(ip.StaticNats) > 0 {
+				filteredIps = append(filteredIps, ip)
 			}
 		}
-		filteredResponse.PublicIps = filteredPublicIps
 
-		return filteredResponse, nil
+		return filteredIps, nil
 
 	} else {
 		logger1.Error("GET request failed with status:", resp.Status)
-		return NcListentPublicIpsResponse{}, errors.New("GET request failed with status: " + resp.Status)
+		return nil, errors.New("GET request failed with status: " + resp.Status)
 	}
-
 }
 
 // get network
 func GetNetworkIdByName(token, network_name string) (NetworkData, error) {
-
-	// Define the API URL
-	apiURL := Config.ApiBaseURL + Config.Zone + "/nc/Network"
-
-	// Set up the HTTP client
+	apiURL := Config.ApiBaseURL + Config.Zone + "/nsm/network?networkType=ALL"
 	client := &http.Client{Timeout: 30 * time.Second}
 
-	// Create a new HTTP GET request
-	req, err := http.NewRequest("GET", apiURL, bytes.NewBuffer([]byte{}))
+	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
-		logger1.Error("Error creating GET VM request:", err)
+		logger1.Error("Error creating GET request:", err)
 		return NetworkData{}, err
 	}
 
-	// Add headers
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Auth-Token", token) // Replace with actual token
+	req.Header.Set("X-Auth-Token", token)
 
-	// Send the request
 	resp, err := client.Do(req)
 	if err != nil {
 		logger1.Error("Error sending request:", err)
@@ -506,21 +325,13 @@ func GetNetworkIdByName(token, network_name string) (NetworkData, error) {
 	}
 	defer resp.Body.Close()
 
-	// Handle the response
-	fmt.Println("Response Status:", resp.Status)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		logger1.Error("Error reading response body:", err)
 		return NetworkData{}, err
 	}
 
-	// logger1.Info("-----------------------------------------")
-	// logger1.Info("Response Body Networks:", string(body))
-	// logger1.Info("********************************")
-
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		logger1.Info("GET request successful and got machine!")
-		// Parse the JSON into the struct
 		var serverResponse ListNetworksResponse
 		err = json.Unmarshal(body, &serverResponse)
 		if err != nil {
@@ -528,24 +339,61 @@ func GetNetworkIdByName(token, network_name string) (NetworkData, error) {
 			return NetworkData{}, err
 		}
 
-		filteredResponse := NetworkData{}
-		for i := 0; i < len(serverResponse.NcListOsNetworksResponse.Networks); i++ {
-			// logger1.Info("NETWORK NAME SERVER: ", network_name)
-			// logger1.Info("-------------------------------------")
-			// logger1.Info("NETWORK 	FILTERED RESPONSE: ", serverResponse.NcListOsNetworksResponse.Networks[i].Name)
-			if serverResponse.NcListOsNetworksResponse.Networks[i].Name == network_name {
-				filteredResponse = serverResponse.NcListOsNetworksResponse.Networks[i]
+		for _, network := range serverResponse.Data {
+			if network.Name == network_name {
+				return network, nil
 			}
 		}
 
-		// logger1.Info("Lenmhgth: ", serverResponse)
-		return filteredResponse, nil
+		return NetworkData{}, fmt.Errorf("network with name '%s' not found", network_name)
 
 	} else {
 		logger1.Error("GET request failed with status:", resp.Status)
-		return NetworkData{}, errors.New("GET request failed with status: " + resp.Status)
+		return NetworkData{}, fmt.Errorf("GET request failed with status: %s", resp.Status)
+	}
+}
+
+// get all networks in VPC
+func GetNetworkAllNetworks(token string) ([]NetworkData, error) {
+	apiURL := Config.ApiBaseURL + Config.Zone + "/nsm/network?networkType=ALL"
+	client := &http.Client{Timeout: 30 * time.Second}
+
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		logger1.Error("Error creating GET request:", err)
+		return []NetworkData{}, err
 	}
 
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Auth-Token", token)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		logger1.Error("Error sending request:", err)
+		return []NetworkData{}, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		logger1.Error("Error reading response body:", err)
+		return []NetworkData{}, err
+	}
+
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		var serverResponse ListNetworksResponse
+		err = json.Unmarshal(body, &serverResponse)
+		if err != nil {
+			logger1.Error("Error unmarshaling JSON response:", err)
+			return []NetworkData{}, err
+		}
+
+		return []NetworkData{}, fmt.Errorf("No networks found associated with any VPC")
+
+	} else {
+		logger1.Error("GET request failed with status:", resp.Status)
+		return []NetworkData{}, fmt.Errorf("GET request failed with status: %s", resp.Status)
+	}
 }
 
 // get vpc networks
