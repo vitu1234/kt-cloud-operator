@@ -242,7 +242,7 @@ func DeleteFirewallSettings(machine *v1beta1.KTMachine, token string) error {
 	jobIdsList := existingFirewallSettings.Status.FirewallJobs
 	logger1.Info("Deleting firewall settings with jobIds:", jobIdsList)
 	for i := 0; i < len(jobIdsList); i++ {
-		err = DeleteFirewallOnCloud(jobIdsList[i].RuleId, token)
+		err = DeleteFirewallOnCloud(jobIdsList[i].PolicyId, token)
 		if err != nil {
 			logger1.Error("Error deleting firewall:", err)
 		}
@@ -258,7 +258,7 @@ func DeleteFirewallSettings(machine *v1beta1.KTMachine, token string) error {
 
 func DeleteFirewallOnCloud(jobId, token string) error {
 	// Define the API URL
-	apiURL := Config.ApiBaseURL + Config.Zone + "/nc/Firewall/" + jobId
+	apiURL := Config.ApiBaseURL + Config.Zone + "/nsm/v1/firewall/policy/" + jobId
 
 	// Set up the HTTP client
 	client := &http.Client{Timeout: 30 * time.Second}
@@ -314,7 +314,7 @@ func DeleteFirewallOnCloud(jobId, token string) error {
 
 func DeleteStaticNatOnCloud(staticNatId, token string) any {
 	// Define the API URL
-	apiURL := Config.ApiBaseURL + Config.Zone + "/nc/StaticNat/" + staticNatId
+	apiURL := Config.ApiBaseURL + Config.Zone + "/nsm/v1/staticNat/" + staticNatId
 
 	// Set up the HTTP client
 	client := &http.Client{Timeout: 30 * time.Second}

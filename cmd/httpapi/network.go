@@ -476,6 +476,12 @@ func AddFirewallSettings(machine *v1beta1.KTMachine, token string, securityGroup
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Auth-Token", token) // Replace with your actual token
 
+	// print the rquest body for debugging
+	logger1.Info("Request Body:", string(payload))
+
+	//print the whole request for debugging
+	logger1.Info("Request for ADDING Firewall Rule:", fmt.Sprintf("%+v", req))
+
 	// Send the request
 	resp, err := client.Do(req)
 	if err != nil {
@@ -497,7 +503,7 @@ func AddFirewallSettings(machine *v1beta1.KTMachine, token string, securityGroup
 		logger1.Info("POST request successful and added firewall settings for the cluster!")
 
 		// Parse the JSON into the struct
-		var serverResponse AddFirewallSettingsResponse
+		var serverResponse NcCreateFirewallRuleResponse
 		err = json.Unmarshal(body, &serverResponse)
 		if err != nil {
 			logger1.Error("Error unmarshaling JSON response:", err)
@@ -507,8 +513,8 @@ func AddFirewallSettings(machine *v1beta1.KTMachine, token string, securityGroup
 		responseText, _ := json.Marshal(serverResponse)
 		logger1.Info("Response Text: " + string(responseText))
 
-		if serverResponse.NcCreateFirewallRuleResponse.DisplayText != "" {
-			return errors.New(serverResponse.NcCreateFirewallRuleResponse.DisplayText)
+		if serverResponse.HttpStatus < 200 || serverResponse.HttpStatus >= 300 {
+			return fmt.Errorf("failed to add firewall settings - http code: %d", serverResponse.HttpStatus)
 		}
 		logger1.Info("Add firewall settings to the cluster ")
 
@@ -523,21 +529,21 @@ func AddFirewallSettings(machine *v1beta1.KTMachine, token string, securityGroup
 			StaticNatId: staticNatId,
 		}
 
-		logger1.Info("Firewall responce job id: ", serverResponse.NcCreateFirewallRuleResponse.JobId)
+		logger1.Info("Firewall responce job id: ", serverResponse.JobId)
 
 		//get the firewall id and create a firewall object in k8s
-		rule_Id, err := GetNetworkingJobId(token, serverResponse.NcCreateFirewallRuleResponse.JobId, "Firewall_Create")
-		if err != nil {
-			logger1.Errorf("Failed to get job id: %v", err)
-			return err
-		}
+		// rule_Id, err := GetNetworkingJobId(token, serverResponse.JobId, "Firewall_Create")
+		// if err != nil {
+		// 	logger1.Errorf("Failed to get job id: %v", err)
+		// 	return err
+		// }
 
-		if rule_Id == "" {
-			logger1.Errorf("Failed to get job id")
-			return errors.New("failed to get job id for firewall settings")
-		}
+		// if rule_Id == "" {
+		// 	logger1.Errorf("Failed to get job id")
+		// 	return errors.New("failed to get job id for firewall settings")
+		// }
 
-		err = createFirewallObjectInK8s(machine, groupRules, serverResponse.NcCreateFirewallRuleResponse.JobId, rule_Id)
+		err = createFirewallObjectInK8s(machine, serverResponse, groupRules)
 		if err != nil {
 			logger1.Errorf("Failed to create firewall object in k8s: %v", err)
 			return err
@@ -551,7 +557,7 @@ func AddFirewallSettings(machine *v1beta1.KTMachine, token string, securityGroup
 	}
 }
 
-func createFirewallObjectInK8s(machine *v1beta1.KTMachine, securityGroupRules v1beta1.FirewallRules, s, rule_Id string) error {
+func createFirewallObjectInK8s(machine *v1beta1.KTMachine, serverResponse NcCreateFirewallRuleResponse, securityGroupRules v1beta1.FirewallRules) error {
 	// panic("unimplemented")
 
 	//check if the firewall object already exists
@@ -559,7 +565,7 @@ func createFirewallObjectInK8s(machine *v1beta1.KTMachine, securityGroupRules v1
 	// if it does not exist, create the object
 	// if it exists and the job id is the same, do nothing
 	// if it exists and the job id is different, update the object
-	logger1.Info("Creating Firewall object in K8s with job id: ", s)
+	logger1.Info("Creating Firewall object in K8s with job id: ", serverResponse.JobId)
 
 	ctx := context.Background()
 	// Update the machine K8s Resource
@@ -589,9 +595,10 @@ func createFirewallObjectInK8s(machine *v1beta1.KTMachine, securityGroupRules v1
 	// }
 
 	ktFirewallJobs := v1beta1.FirewallJobs{
-		JobId:     s,
-		RuleId:    rule_Id,
-		CreatedAt: time.Now().UTC().Format("2006-01-02T15:04:05.000000Z"),
+		JobId:    serverResponse.JobId,
+		VPCId:    serverResponse.VpcId,
+		PolicyId: serverResponse.PolicyId,
+		Detail:   serverResponse.Detail,
 	}
 
 	existingFirewallObj := &v1beta1.KTNetworkFirewall{}
@@ -669,7 +676,7 @@ func createFirewallObjectInK8s(machine *v1beta1.KTMachine, securityGroupRules v1
 func GetNetworkingJobId(token, job_id, job_type string) (string, error) {
 
 	// Define the API URL
-	apiURL := Config.ApiBaseURL + Config.Zone + "nsm/v1/job/status/" + job_id
+	apiURL := Config.ApiBaseURL + Config.Zone + "/nsm/v1/job/status/" + job_id
 
 	// Set up the HTTP client
 	client := &http.Client{Timeout: 30 * time.Second}

@@ -77,9 +77,11 @@ type AddFirewallSettingsResponse struct {
 }
 
 type NcCreateFirewallRuleResponse struct {
-	DisplayText string `json:"displaytext"`
-	Success     bool   `json:"success"`
-	JobId       string `json:"job_id"`
+	HttpStatus int    `json:"httpStatus"`
+	JobId      string `json:"jobId"`
+	Detail     string `json:"detail"`
+	VpcId      string `json:"vpcId"`
+	PolicyId   string `json:"policyId"`
 }
 
 // get networks response

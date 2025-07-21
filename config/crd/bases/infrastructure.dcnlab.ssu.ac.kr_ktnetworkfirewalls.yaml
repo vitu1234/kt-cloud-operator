@@ -92,11 +92,13 @@ spec:
                   Important: Run "make" to regenerate code after modifying this file
                 items:
                   properties:
-                    createdAt:
+                    detail:
                       type: string
                     jobId:
                       type: string
-                    ruleId:
+                    policyId:
+                      type: string
+                    vpcId:
                       type: string
                   type: object
                 type: array

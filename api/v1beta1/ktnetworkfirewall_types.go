@@ -53,9 +53,10 @@ type KTNetworkFirewallStatus struct {
 }
 
 type FirewallJobs struct {
-	JobId     string `json:"jobId,omitempty"`
-	CreatedAt string `json:"createdAt,omitempty"`
-	RuleId    string `json:"ruleId,omitempty"`
+	JobId    string `json:"jobId,omitempty"`
+	VPCId    string `json:"vpcId,omitempty"`
+	PolicyId string `json:"policyId,omitempty"`
+	Detail   string `json:"detail,omitempty"`
 }
 
 // +kubebuilder:object:root=true
