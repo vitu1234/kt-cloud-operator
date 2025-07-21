@@ -375,7 +375,7 @@ func (r *KTMachineReconciler) reconcileInfrastructure(ctx context.Context, ktMac
 						}
 					}
 
-					logger.Error(errors.New("failed to attach public ip to machine hehehehehe"), "Machine", ktMachine.Name)
+					// logger.Error(errors.New("failed to attach public ip to machine hehehehehe"), "Machine", ktMachine.Name)
 
 					//we are done with the control plane
 					ktMachine.Status.ControlPlaneRef.Type = "BootstrapReady"
