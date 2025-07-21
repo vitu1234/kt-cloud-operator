@@ -18,7 +18,7 @@ spec:
       #     kind: KubeadmConfigTemplate
       #     name: openstack-nephio-md-0
       clusterName: kt-cluster1
-      failureDomain: fb484b88-7425-462b-9192-09b9e3139d19
+      failureDomain: DX-G
       infrastructureRef:
         apiVersion: infrastructure.dcnlab.ssu.ac.kr/v1beta1
         kind: KTCluster
@@ -45,7 +45,7 @@ spec:
       #     kind: KubeadmConfigTemplate
       #     name: openstack-nephio-md-0
       clusterName: kt-cluster1
-      failureDomain: fb484b88-7425-462b-9192-09b9e3139d19
+      failureDomain: DX-G
       infrastructureRef:
         apiVersion: infrastructure.dcnlab.ssu.ac.kr/v1beta1
         kind: KTCluster

@@ -77,8 +77,8 @@ func AttachPublicIP(machine *v1beta1.KTMachine, token string) error {
 	publicIpId := publicIPs[0].ID
 
 	networkAttachRequest := PostPayload{
-		VMGuestIP:     mappedIp,
-		EntPublicIPId: publicIpId,
+		MappedIP:   mappedIp,
+		PublicIPId: publicIpId,
 	}
 
 	// Marshal the struct to JSON
@@ -248,7 +248,7 @@ func GetAvailablePublicIpAddresses(token string) ([]PublicIp, error) {
 func GetAssignedPublicIpAddresses(token string) ([]PublicIp, error) {
 
 	// Define the API URL
-	apiURL := Config.ApiBaseURL + Config.Zone + "/nc/IpAddress"
+	apiURL := Config.ApiBaseURL + Config.Zone + "/nsm/v1/publicIp"
 
 	// Set up the HTTP client
 	client := &http.Client{Timeout: 30 * time.Second}
@@ -305,7 +305,7 @@ func GetAssignedPublicIpAddresses(token string) ([]PublicIp, error) {
 
 // get network
 func GetNetworkIdByName(token, network_name string) (NetworkData, error) {
-	apiURL := Config.ApiBaseURL + Config.Zone + "/nsm/network?networkType=ALL"
+	apiURL := Config.ApiBaseURL + Config.Zone + "/nsm/v1/network?networkType=ALL"
 	client := &http.Client{Timeout: 30 * time.Second}
 
 	req, err := http.NewRequest("GET", apiURL, nil)
@@ -315,6 +315,7 @@ func GetNetworkIdByName(token, network_name string) (NetworkData, error) {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Auth-Token", token)
 	req.Header.Set("X-Auth-Token", token)
 
 	resp, err := client.Do(req)
@@ -354,7 +355,7 @@ func GetNetworkIdByName(token, network_name string) (NetworkData, error) {
 
 // get all networks in VPC
 func GetNetworkAllNetworks(token string) ([]NetworkData, error) {
-	apiURL := Config.ApiBaseURL + Config.Zone + "/nsm/network?networkType=ALL"
+	apiURL := Config.ApiBaseURL + Config.Zone + "/nsm/v1/network?networkType=ALL"
 	client := &http.Client{Timeout: 30 * time.Second}
 
 	req, err := http.NewRequest("GET", apiURL, nil)
@@ -387,73 +388,13 @@ func GetNetworkAllNetworks(token string) ([]NetworkData, error) {
 			return []NetworkData{}, err
 		}
 
-		return []NetworkData{}, fmt.Errorf("No networks found associated with any VPC")
+		//return all networks
+		return serverResponse.Data, nil
 
 	} else {
 		logger1.Error("GET request failed with status:", resp.Status)
 		return []NetworkData{}, fmt.Errorf("GET request failed with status: %s", resp.Status)
 	}
-}
-
-// get vpc networks
-func GetListVpcNetworks(token string) ([]NetworkData, error) {
-
-	// Define the API URL
-	apiURL := Config.ApiBaseURL + Config.Zone + "/nc/VPC"
-
-	// Set up the HTTP client
-	client := &http.Client{Timeout: 30 * time.Second}
-
-	// Create a new HTTP GET request
-	req, err := http.NewRequest("GET", apiURL, bytes.NewBuffer([]byte{}))
-	if err != nil {
-		logger1.Error("Error creating GET VM request:", err)
-		return []NetworkData{}, err
-	}
-
-	// Add headers
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Auth-Token", token) // Replace with actual token
-
-	// Send the request
-	resp, err := client.Do(req)
-	if err != nil {
-		logger1.Error("Error sending request:", err)
-		return []NetworkData{}, err
-	}
-	defer resp.Body.Close()
-
-	// Handle the response
-	fmt.Println("Response Status:", resp.Status)
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		logger1.Error("Error reading response body:", err)
-		return []NetworkData{}, err
-	}
-
-	// logger1.Info("-----------------------------------------")
-	// logger1.Info("Response Body Networks:", string(body))
-	// logger1.Info("********************************")
-
-	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		logger1.Info("GET request successful and got machine!")
-		// Parse the JSON into the struct
-		var serverResponse ListVpcsResponse
-		err = json.Unmarshal(body, &serverResponse)
-		if err != nil {
-			logger1.Error("Error unmarshaling JSON response:", err)
-			return []NetworkData{}, err
-		}
-
-		filteredResponse := serverResponse.NcListVpcResponse.Vpcs[0].Networks //HOW TO IDENTIFY A VPC INCASE WE HAVE MULTIPLE VPCs
-
-		return filteredResponse, nil
-
-	} else {
-		logger1.Error("GET request failed with status:", resp.Status)
-		return []NetworkData{}, errors.New("GET request failed with status: " + resp.Status)
-	}
-
 }
 
 // add firewall settings

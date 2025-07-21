@@ -38,9 +38,8 @@ type StaticNat struct {
 
 // Post Request Payload attach nat
 type PostPayload struct {
-	VMGuestIP     string `json:"vmguestip"`
-	VMNetworkId   string `json:"vmnetworkid"`
-	EntPublicIPId string `json:"entpublicipid"`
+	MappedIP   string `json:"mappedIp"`
+	PublicIPId string `json:"publicIpId"`
 }
 
 // POst payload for Firewall settings

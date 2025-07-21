@@ -20,14 +20,14 @@ spec:
       endPort: "65535"
       protocol: ALL
       dstip: "0.0.0.0/0"
-      action: allow
+      action: "true" # true means allow, false means deny
     workerRules:
       direction: egress
       startPort: "1"
       endPort: "65535"
       protocol: ALL
       dstip: "0.0.0.0/0"
-      action: allow
+      action: "true" # true means allow, false means deny
   # managedSubnets:
   # - cidr: 10.6.0.0/24
   #   dnsNameservers:

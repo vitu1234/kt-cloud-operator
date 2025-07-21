@@ -28,7 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"dcnlab.ssu.ac.kr/kt-cloud-operator/api/v1beta1"
@@ -99,65 +98,67 @@ func (r *KTMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		}
 	}
 
-	// we have to add finalizers
-	if ktMachine.ObjectMeta.DeletionTimestamp.IsZero() {
-		// The object is not being deleted, so lets add our finalizer if not already added
-		if !controllerutil.ContainsFinalizer(ktMachine, infrastructurev1beta1.KTMachineFinalizer) {
-			controllerutil.AddFinalizer(ktMachine, infrastructurev1beta1.KTMachineFinalizer)
+	//DISABLE FINALIZER FOR NOW
+	/*
+		// we have to add finalizers
+		if ktMachine.ObjectMeta.DeletionTimestamp.IsZero() {
+			// The object is not being deleted, so lets add our finalizer if not already added
+			if !controllerutil.ContainsFinalizer(ktMachine, infrastructurev1beta1.KTMachineFinalizer) {
+				controllerutil.AddFinalizer(ktMachine, infrastructurev1beta1.KTMachineFinalizer)
 
-			if err := r.Update(ctx, ktMachine); err != nil {
-				return ctrl.Result{}, err
+				if err := r.Update(ctx, ktMachine); err != nil {
+					return ctrl.Result{}, err
+				}
 			}
+		} else {
+			// The object is being deleted
+			if controllerutil.ContainsFinalizer(ktMachine, infrastructurev1beta1.KTMachineFinalizer) {
+				// our finalizer is present, so lets handle any external dependency
+				// we have to delete the machine on the cloud
+				// we have to remove the finalizer and update the machine
+				// remove our finalizer from the list and update it.
+				// our finalizer is present, so lets handle any external dependency
+				//update the machine status to deleting
+				ktMachine.Status.Status = "DELETING"
+				if err := r.Status().Update(ctx, ktMachine); err != nil {
+					return ctrl.Result{}, err
+				}
+
+				if err := r.deleteExternalResources(ctx, ktMachine, subjectToken); err != nil {
+					// if fail to delete the external dependency here, return with error
+					// so that it can be retried.
+					return ctrl.Result{}, err
+				}
+				// remove our finalizer from the list and update it.
+				//remove finalizer from kt cluster
+
+				controllerutil.RemoveFinalizer(ktMachine, infrastructurev1beta1.KTMachineFinalizer)
+				if err := r.Update(ctx, ktMachine); err != nil {
+					return ctrl.Result{}, err
+				}
+
+				//we have to trigger cluster deletion
+				//we have to trigger any ktcluster update
+				// Trigger KTClusterReconciler to reconcile the cluster
+				if err := r.triggerClusterReconciliation(ctx, cluster, req); err != nil {
+					logger.Error(err, "Failed to trigger KTCluster reconciliation")
+					return ctrl.Result{}, err
+				}
+
+				// controllerutil.RemoveFinalizer(ktSubjectToken, infrastructurev1beta1.KTSubjectTokenFinalizer)
+				// if err := r.Update(ctx, ktSubjectToken); err != nil {
+				// 	return ctrl.Result{}, err
+				// }
+
+				// controllerutil.RemoveFinalizer(cluster, infrastructurev1beta1.KTClusterFinalizer)
+				// if err := r.Update(ctx, cluster); err != nil {
+				// 	return ctrl.Result{}, err
+				// }
+			}
+			// Stop reconciliation as the item is being deleted
+			return ctrl.Result{}, nil
 		}
-	} else {
-		// The object is being deleted
-		if controllerutil.ContainsFinalizer(ktMachine, infrastructurev1beta1.KTMachineFinalizer) {
-			// our finalizer is present, so lets handle any external dependency
-			// we have to delete the machine on the cloud
-			// we have to remove the finalizer and update the machine
-			// remove our finalizer from the list and update it.
-			// our finalizer is present, so lets handle any external dependency
-			//update the machine status to deleting
-			ktMachine.Status.Status = "DELETING"
-			if err := r.Status().Update(ctx, ktMachine); err != nil {
-				return ctrl.Result{}, err
-			}
-
-			if err := r.deleteExternalResources(ctx, ktMachine, subjectToken); err != nil {
-				// if fail to delete the external dependency here, return with error
-				// so that it can be retried.
-				return ctrl.Result{}, err
-			}
-			// remove our finalizer from the list and update it.
-			//remove finalizer from kt cluster
-
-			controllerutil.RemoveFinalizer(ktMachine, infrastructurev1beta1.KTMachineFinalizer)
-			if err := r.Update(ctx, ktMachine); err != nil {
-				return ctrl.Result{}, err
-			}
-
-			//we have to trigger cluster deletion
-			//we have to trigger any ktcluster update
-			// Trigger KTClusterReconciler to reconcile the cluster
-			if err := r.triggerClusterReconciliation(ctx, cluster, req); err != nil {
-				logger.Error(err, "Failed to trigger KTCluster reconciliation")
-				return ctrl.Result{}, err
-			}
-
-			// controllerutil.RemoveFinalizer(ktSubjectToken, infrastructurev1beta1.KTSubjectTokenFinalizer)
-			// if err := r.Update(ctx, ktSubjectToken); err != nil {
-			// 	return ctrl.Result{}, err
-			// }
-
-			// controllerutil.RemoveFinalizer(cluster, infrastructurev1beta1.KTClusterFinalizer)
-			// if err := r.Update(ctx, cluster); err != nil {
-			// 	return ctrl.Result{}, err
-			// }
-		}
-		// Stop reconciliation as the item is being deleted
-		return ctrl.Result{}, nil
-	}
-
+	*/
 	// check if current machine is control plane
 	// machineName := ktMachine.Name
 	// substring := "control-plane"
@@ -373,6 +374,8 @@ func (r *KTMachineReconciler) reconcileInfrastructure(ctx context.Context, ktMac
 							return err
 						}
 					}
+
+					logger.Error(errors.New("failed to attach public ip to machine hehehehehe"), "Machine", ktMachine.Name)
 
 					//we are done with the control plane
 					ktMachine.Status.ControlPlaneRef.Type = "BootstrapReady"
