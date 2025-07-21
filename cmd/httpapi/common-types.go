@@ -44,15 +44,17 @@ type PostPayload struct {
 }
 
 // POst payload for Firewall settings
-type PostPayloadFirewallSettings struct {
-	StartPort    string `json:"startport"`
-	EndPort      string `json:"endport"`
-	Action       string `json:"action"`
-	Protocol     string `json:"protocol"`
-	DstIp        string `json:"dstip"`
-	VirtualIPId  string `json:"virtualipid"`
-	SrcNetworkId string `json:"srcnetworkid"`
-	DstNetworkId string `json:"dstnetworkid"`
+type FirewallRuleRequest struct {
+	SrcNat      bool     `json:"srcNat"`
+	StartPort   string   `json:"startport"`
+	EndPort     string   `json:"endport"`
+	Protocol    string   `json:"protocol"`
+	Action      string   `json:"action"` // "true" as string in JSON, not boolean
+	SrcNetwork  []string `json:"srcNetwork"`
+	DstNetwork  []string `json:"dstNetwork,omitempty"`
+	StaticNatId string   `json:"staticNatId"`
+	SrcAddress  []string `json:"srcAddress,omitempty"`
+	DstAddress  []string `json:"dstAddress,omitempty"`
 }
 
 type MachinePrivateAddresses struct {
@@ -62,13 +64,12 @@ type MachinePrivateAddresses struct {
 
 // attach NAT response
 type NATAttachResponse struct {
-	NcEnableStaticNatResponse NcEnableStaticNatResponse `json:"nc_enablestaticnatresponse"`
+	HttpStatus int                 `json:"httpStatus"`
+	Data       StaticNatIdResponse `json:"data"`
 }
 
-type NcEnableStaticNatResponse struct {
-	DisplayText string `json:"displaytext"`
-	Success     bool   `json:"success"`
-	Id          string `json:"id"`
+type StaticNatIdResponse struct {
+	StaticNatId string `json:"staticNatId"`
 }
 
 // create firewall settings response
@@ -106,7 +107,16 @@ type NcListVPCResponse struct {
 
 // Response for getting networking Job Ids
 type QueryAsyncJobResultResponse struct {
-	NcQueryAsyncJobResultResponse NcQueryAsyncJobResultResponse `json:"nc_queryasyncjobresultresponse"`
+	HttpStatus int                `json:"httpStatus"`
+	JobId      string             `json:"jobId"`
+	Data       AsyncJobResultData `json:"data"`
+	JobStatus  string             `json:"jobStatus"`
+}
+type AsyncJobResultData struct {
+	JobId    *string `json:"jobId"`    // nullable, use pointer
+	Detail   *string `json:"detail"`   // nullable
+	VpcId    *string `json:"vpcId"`    // nullable
+	PolicyId *string `json:"policyId"` // optional non-null value
 }
 
 type NcQueryAsyncJobResultResponse struct {

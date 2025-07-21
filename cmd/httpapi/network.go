@@ -40,46 +40,45 @@ func AttachPublicIP(machine *v1beta1.KTMachine, token string) error {
 		return errors.New("failed to get machine address to pair with public ip address for firewall settings")
 	}
 
-	vmguestip := machinePrivateAddresses[0].Address       //just get the first IP address
+	mappedIp := machinePrivateAddresses[0].Address        //just get the first IP address
 	networkName := machinePrivateAddresses[0].NetworkName //just get the first IP address
-	vmnetworkid := machine.Spec.NetworkTier[0].ID         //just get the first tier
+	// vmnetworkid := machine.Spec.NetworkTier[0].ID         //just get the first tier
 
-	networkData, err := GetNetworkAllNetworks(token)
+	// networkData, err := GetNetworkAllNetworks(token)
 
-	if err != nil {
-		return err
-	}
-	if len(networkData) == 0 {
-		return errors.New("failed to retrieve network data from cloud api call in the VPC, maybe try creating a network in the cloud in same zone as the cluster")
-	}
+	// if err != nil {
+	// 	return err
+	// }
+	// if len(networkData) == 0 {
+	// 	return errors.New("failed to retrieve network data from cloud api call in the VPC, maybe try creating a network in the cloud in same zone as the cluster")
+	// }
 
-	// find the network ID by looping through the networkData
-	var networkID string
-	for _, network := range networkData {
+	// // find the network ID by looping through the networkData
+	// var networkID string
+	// for _, network := range networkData {
 
-		if network.Name == networkName {
-			networkID = network.ID
-			break
-		}
-	}
-	if networkID == "" {
-		return errors.New("failed to find network ID for network name: " + networkName)
-	}
+	// 	if network.Name == networkName {
+	// 		networkID = network.ID
+	// 		break
+	// 	}
+	// }
+	// if networkID == "" {
+	// 	return errors.New("failed to find network ID for network name: " + networkName)
+	// }
 
 	publicIPs, err := GetAvailablePublicIpAddresses(token)
 
 	if err != nil {
 		return err
 	}
-	if len(publicIPs.PublicIps) == 0 {
+	if len(publicIPs) == 0 {
 		return errors.New("no available public ip addresses on the cloud, maybe try creating in the cloud in same zone as the cluster")
 	}
-	entpublicipid := publicIPs.PublicIps[0].Id
+	publicIpId := publicIPs[0].ID
 
 	networkAttachRequest := PostPayload{
-		VMGuestIP:     vmguestip,
-		VMNetworkId:   vmnetworkid,
-		EntPublicIPId: entpublicipid,
+		VMGuestIP:     mappedIp,
+		EntPublicIPId: publicIpId,
 	}
 
 	// Marshal the struct to JSON
@@ -90,7 +89,7 @@ func AttachPublicIP(machine *v1beta1.KTMachine, token string) error {
 	}
 
 	// Define the endpoint URL
-	apiURL := Config.ApiBaseURL + Config.Zone + "/nc/StaticNat"
+	apiURL := Config.ApiBaseURL + Config.Zone + "/nsm/v1/staticNat"
 
 	// Set up HTTP client with timeout
 	// Set up the HTTP client
@@ -135,11 +134,11 @@ func AttachPublicIP(machine *v1beta1.KTMachine, token string) error {
 			return err
 		}
 
-		// logger1.Info("Response Text: " + serverResponse.NcEnableStaticNatResponse.DisplayText)
-
-		if !serverResponse.NcEnableStaticNatResponse.Success {
-			return errors.New(serverResponse.NcEnableStaticNatResponse.DisplayText)
+		if serverResponse.HttpStatus < 200 || serverResponse.HttpStatus >= 300 {
+			return errors.New("Failed to attach public IP: " + serverResponse.Data.StaticNatId)
 		}
+
+		logger1.Info("NAT Attach Response Text: " + serverResponse.Data.StaticNatId)
 
 		// logger1.Info("Didnt pass here")
 
@@ -160,14 +159,14 @@ func AttachPublicIP(machine *v1beta1.KTMachine, token string) error {
 		}
 		machineStatusCopy := machine.Status
 		assignedIp := v1beta1.AssignedPublicIps{
-			Id:          publicIPs.PublicIps[0].Id,
-			IP:          publicIPs.PublicIps[0].IP,
-			StaticNatId: serverResponse.NcEnableStaticNatResponse.Id,
+			Id:          publicIPs[0].ID,
+			IP:          publicIPs[0].IP,
+			StaticNatId: serverResponse.Data.StaticNatId,
 			PairedPvtNetwork: v1beta1.PairedPvtNetwork{
 				NetworkName: networkName,
-				NetworkID:   networkData.ID,
-				NetworkOsID: networkData.OSNetworkID,
-				VMPvtIP:     vmguestip,
+				// NetworkID:   machinePrivateAddresses[0].NetworkName,
+				// NetworkOsID: networkData.OSNetworkID,
+				VMPvtIP: mappedIp,
 			},
 		}
 		machineStatusCopy.AssignedPublicIps = append(machineStatusCopy.AssignedPublicIps, assignedIp)
@@ -465,75 +464,50 @@ func AddFirewallSettings(machine *v1beta1.KTMachine, token string, securityGroup
 	if err != nil {
 		return err
 	}
-	if len(publicIPs.PublicIps) == 0 {
+	if len(publicIPs) == 0 {
 		return errors.New("no ip addresses have been assigned to find public address for this machine")
 	}
 
-	//get network id
-	vpcNetworks, err := GetListVpcNetworks(token)
-
+	//get network id for the external network
+	networkList, err := GetNetworkAllNetworks(token)
 	if err != nil {
 		return err
 	}
-
-	if len(vpcNetworks) == 0 {
-		return errors.New("failed to get vpc networks from cloud api call")
+	if len(networkList) == 0 {
+		return errors.New("failed to get external network from cloud api call")
 	}
 
-	var virtualipid string
-	var dstnetworkid string
-	var srcnetworkid string
+	var externalNetworkID string
+	for i := 0; i < len(networkList); i++ {
+		if networkList[i].Name == "external" || networkList[i].Type == "UNTRUST" {
+			externalNetworkID = networkList[i].ID
+			break
+		}
+	}
+
+	if len(externalNetworkID) == 0 {
+		return errors.New("failed to find external network ID")
+	}
 
 	//for enabling outbound internet traffic
 	// var from_internet string
 	// var from_internal string
+	var staticNatId string
 
-	for i := 0; i < len(publicIPs.PublicIps); i++ {
-		if len(publicIPs.PublicIps[i].VirtualIps) > 0 {
-			for y := 0; y < len(publicIPs.PublicIps[i].VirtualIps); y++ {
-				for z := 0; z < len(machine.Status.AssignedPublicIps); z++ {
-					if publicIPs.PublicIps[i].VirtualIps[y].IPAddress == machine.Status.AssignedPublicIps[z].IP {
-						virtualipid = publicIPs.PublicIps[i].VirtualIps[y].Id
-						if securityGroupRules.Direction == "ingress" {
-							dstnetworkid = machine.Status.AssignedPublicIps[z].PairedPvtNetwork.NetworkID
-							for i := 0; i < len(vpcNetworks); i++ {
-								if vpcNetworks[i].Type == "PUBLIC" {
-									srcnetworkid = vpcNetworks[i].ID
-									// if enableOutboundInternetTraffic {
-									// 	from_internal = dstnetworkid
-									// 	from_internet = srcnetworkid
-									// }
-
-								}
-							}
-						} else {
-							srcnetworkid = machine.Status.AssignedPublicIps[z].PairedPvtNetwork.NetworkID
-							for i := 0; i < len(vpcNetworks); i++ {
-								if vpcNetworks[i].Type == "PUBLIC" {
-									dstnetworkid = vpcNetworks[i].ID
-
-									// from_internal = dstnetworkid
-									// from_internet = srcnetworkid
-								}
-							}
-						}
-
-						break
-					}
-				}
-			}
-		}
+	for z := 0; z < len(machine.Status.AssignedPublicIps); z++ {
+		// get static nat id
+		staticNatId = machine.Status.AssignedPublicIps[z].StaticNatId
 	}
 
-	firewallSettingsRequest := PostPayloadFirewallSettings{
-		StartPort:    securityGroupRules.StartPort,
-		EndPort:      securityGroupRules.EndPort,
-		Action:       securityGroupRules.Action,
-		Protocol:     securityGroupRules.Protocol,
-		DstIp:        securityGroupRules.Dstip,
-		VirtualIPId:  virtualipid,
-		SrcNetworkId: srcnetworkid,
-		DstNetworkId: dstnetworkid,
+	firewallSettingsRequest := FirewallRuleRequest{
+		SrcNat:    false,
+		StartPort: securityGroupRules.StartPort,
+		EndPort:   securityGroupRules.EndPort,
+
+		Action:      securityGroupRules.Action,
+		Protocol:    securityGroupRules.Protocol,
+		SrcNetwork:  []string{externalNetworkID},
+		StaticNatId: staticNatId,
 	}
 
 	// Marshal the struct to JSON
@@ -544,7 +518,7 @@ func AddFirewallSettings(machine *v1beta1.KTMachine, token string, securityGroup
 	}
 
 	// Define the endpoint URL
-	apiURL := Config.ApiBaseURL + Config.Zone + "/nc/Firewall"
+	apiURL := Config.ApiBaseURL + Config.Zone + "/nsm/v1/firewall/policy"
 
 	// Set up HTTP client with timeout
 	// Set up the HTTP client
@@ -598,14 +572,14 @@ func AddFirewallSettings(machine *v1beta1.KTMachine, token string, securityGroup
 		logger1.Info("Add firewall settings to the cluster ")
 
 		groupRules := v1beta1.FirewallRules{
-			StartPort:    securityGroupRules.StartPort,
-			Protocol:     securityGroupRules.Protocol,
-			VirtualIPID:  virtualipid,
-			Action:       securityGroupRules.Action,
-			SrcNetworkID: srcnetworkid,
-			DstIP:        securityGroupRules.Dstip,
-			EndPort:      securityGroupRules.EndPort,
-			DstNetworkID: dstnetworkid,
+			SrcNat:    false,
+			StartPort: securityGroupRules.StartPort,
+			EndPort:   securityGroupRules.EndPort,
+
+			Action:      securityGroupRules.Action,
+			Protocol:    securityGroupRules.Protocol,
+			SrcNetwork:  []string{externalNetworkID},
+			StaticNatId: staticNatId,
 		}
 
 		logger1.Info("Firewall responce job id: ", serverResponse.NcCreateFirewallRuleResponse.JobId)
@@ -754,7 +728,7 @@ func createFirewallObjectInK8s(machine *v1beta1.KTMachine, securityGroupRules v1
 func GetNetworkingJobId(token, job_id, job_type string) (string, error) {
 
 	// Define the API URL
-	apiURL := Config.ApiBaseURL + Config.Zone + "/nc/Etc?command=queryAsyncJob&jobid=" + job_id
+	apiURL := Config.ApiBaseURL + Config.Zone + "nsm/v1/job/status/" + job_id
 
 	// Set up the HTTP client
 	client := &http.Client{Timeout: 30 * time.Second}
@@ -799,12 +773,19 @@ func GetNetworkingJobId(token, job_id, job_type string) (string, error) {
 			logger1.Error("Error unmarshaling JSON response:", err)
 			return "", err
 		}
-		logger1.Info("Firewall or Network: Create Job ID: ", serverResponse.NcQueryAsyncJobResultResponse)
+
+		logger1.Info("Response Text for firewall: " + string(body))
+
 		if job_type == "Firewall_Create" {
-			logger1.Info("Firewall: Create Job ID: ", serverResponse.NcQueryAsyncJobResultResponse)
-			return serverResponse.NcQueryAsyncJobResultResponse.Result.ID, nil
+			if serverResponse.Data.PolicyId != nil {
+				return *serverResponse.Data.PolicyId, nil
+			}
+			return "", errors.New("PolicyId is nil")
 		} else {
-			return serverResponse.NcQueryAsyncJobResultResponse.Result.IPAddress, nil
+			if serverResponse.Data.VpcId != nil {
+				return *serverResponse.Data.VpcId, nil
+			}
+			return "", errors.New("VpcId is nil")
 		}
 
 		// logger1.Info("Lenmhgth: ", serverResponse)

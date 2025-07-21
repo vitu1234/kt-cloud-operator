@@ -33,14 +33,16 @@ type KTNetworkFirewallSpec struct {
 }
 
 type FirewallRules struct {
-	StartPort    string `json:"startport,omitempty"`
-	Protocol     string `json:"protocol,omitempty"`
-	VirtualIPID  string `json:"virtualipid,omitempty"`
-	Action       string `json:"action,omitempty"`
-	SrcNetworkID string `json:"srcnetworkid,omitempty"`
-	DstIP        string `json:"dstip,omitempty"`
-	EndPort      string `json:"endport,omitempty"`
-	DstNetworkID string `json:"dstnetworkid,omitempty"`
+	SrcNat      bool     `json:"srcNat"`
+	StartPort   string   `json:"startport"`
+	EndPort     string   `json:"endport"`
+	Protocol    string   `json:"protocol"`
+	Action      string   `json:"action"` // "true" as string in JSON, not boolean
+	SrcNetwork  []string `json:"srcNetwork"`
+	DstNetwork  []string `json:"dstNetwork,omitempty"`
+	StaticNatId string   `json:"staticNatId"`
+	SrcAddress  []string `json:"srcAddress,omitempty"`
+	DstAddress  []string `json:"dstAddress,omitempty"`
 }
 
 // KTNetworkFirewallStatus defines the observed state of KTNetworkFirewall.

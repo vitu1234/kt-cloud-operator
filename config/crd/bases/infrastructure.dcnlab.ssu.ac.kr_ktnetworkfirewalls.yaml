@@ -46,20 +46,40 @@ spec:
                   properties:
                     action:
                       type: string
-                    dstip:
-                      type: string
-                    dstnetworkid:
-                      type: string
+                    dstAddress:
+                      items:
+                        type: string
+                      type: array
+                    dstNetwork:
+                      items:
+                        type: string
+                      type: array
                     endport:
                       type: string
                     protocol:
                       type: string
-                    srcnetworkid:
-                      type: string
+                    srcAddress:
+                      items:
+                        type: string
+                      type: array
+                    srcNat:
+                      type: boolean
+                    srcNetwork:
+                      items:
+                        type: string
+                      type: array
                     startport:
                       type: string
-                    virtualipid:
+                    staticNatId:
                       type: string
+                  required:
+                  - action
+                  - endport
+                  - protocol
+                  - srcNat
+                  - srcNetwork
+                  - startport
+                  - staticNatId
                   type: object
                 type: array
             type: object
