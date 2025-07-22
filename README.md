@@ -93,4 +93,47 @@ This is an kubernetes operator used create a Kubernetes cluster on KT Cloud [her
 ```
 
 
+```
+kubectl get secret kt-cluster1-kubeconfig -o jsonpath='{.data.value}' | base64 -d>ktcluster.kubeconfig
+# edit the kubeconfig and comment out the certificate-authority-data and add the "insecure-skip-tls-verify: true" key value
+nano nano ktcluster.kubeconfig
+#add this after commenting out the above
+insecure-skip-tls-verify: true
+# change the server to the assigned public IP
+server: https://172.25.0.8:6443
+# changed to
+server: https://211.57.84.213:6443
+# and we have the following
+root@mgmt-control:~# nano ktcluster.kubeconfig
+root@mgmt-control:~# kubectl get nodes --kubeconfig ktcluster.kubeconfig
+NAME                                        STATUS     ROLES           AGE     VERSION
+kt-cluster1-control-plane-62bodppn5-yammk   NotReady   control-plane   6m5s    v1.29.15
+kt-cluster1-md-0-nspmm7rznc1g51w            NotReady   <none>          4m30s   v1.29.15
 
+```
+
+##### KubeConfig setting up
+* Since we don't have direct communication setup to the cloud or cluster, we need to temporarily disable TLS verification (testing purposes only)
+* Just delete the certificate-authority-data line in your kubeconfig and keep insecure-skip-tls-verify: true while testing:
+* We want to access the cluster through the public assigned IP but internally, the certificates only allows private/local IP address
+  * This means your kubeconfig file is using both:
+    * a certificate authority file (certificate-authority, certificate-authority-data)
+    * and insecure-skip-tls-verify: true
+  * Kubernetes does not allow both at the same time — it's one or the other.
+* Solution:
+  * If you want to use insecure-skip-tls-verify: true (i.e., bypass TLS check):
+  ```
+  clusters:
+  - cluster:
+    server: https://211.57.84.213:6443
+    insecure-skip-tls-verify: true
+    # REMOVE this line if it exists:
+    # certificate-authority-data: ...
+    # OR
+    # certificate-authority: ...
+  ```
+  * If you want to keep TLS verification:
+    1. Remove insecure-skip-tls-verify: true
+    2. Make sure the certificate-authority-data or certificate-authority is valid
+    3. And the server URL matches one of the cert SANs (e.g., 172.25.0.118)
+    But in your case, you said the public IP is not in the cert SAN — so this will fail unless you regenerate the certs (as explained earlier).

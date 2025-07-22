@@ -397,7 +397,7 @@ func (r *KTMachineReconciler) reconcileInfrastructure(ctx context.Context, ktMac
 
 					logger.Info("Control Plane is ready for join, we have to update the status of the machine")
 					// create kubeconfig secret for the control plane
-					err = httpapi.FetchAndCreateKubeconfigSecret(r.Client, ktMachine)
+					err = httpapi.FetchAndCreateKubeconfigSecret(r.Client, ktMachine, cluster)
 					if err != nil {
 						logger.Error(err, "Failed to create kubeconfig secret for control plane")
 						return err
