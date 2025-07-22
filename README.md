@@ -94,6 +94,9 @@ This is an kubernetes operator used create a Kubernetes cluster on KT Cloud [her
 
 
 ```
+# if it already exits before cluster creation, delete it
+kubectl delete secrets kt-cluster1-kubeconfig
+
 kubectl get secret kt-cluster1-kubeconfig -o jsonpath='{.data.value}' | base64 -d>ktcluster.kubeconfig
 # edit the kubeconfig and comment out the certificate-authority-data and add the "insecure-skip-tls-verify: true" key value
 nano nano ktcluster.kubeconfig

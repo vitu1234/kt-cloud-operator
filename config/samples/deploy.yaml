@@ -1,0 +1,1800 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+    control-plane: controller-manager
+  name: kt-cloud-operator-system
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.4
+  name: clusters.infrastructure.dcnlab.ssu.ac.kr
+spec:
+  group: infrastructure.dcnlab.ssu.ac.kr
+  names:
+    kind: Cluster
+    listKind: ClusterList
+    plural: clusters
+    singular: cluster
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: Cluster is the Schema for the clusters API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ClusterSpec defines the desired state of Cluster.
+            properties:
+              foo:
+                description: Foo is an example field of Cluster. Edit cluster_types.go
+                  to remove/update
+                type: string
+            type: object
+          status:
+            description: ClusterStatus defines the observed state of Cluster.
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.4
+  name: ktclusters.infrastructure.dcnlab.ssu.ac.kr
+spec:
+  group: infrastructure.dcnlab.ssu.ac.kr
+  names:
+    kind: KTCluster
+    listKind: KTClusterList
+    plural: ktclusters
+    singular: ktcluster
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: KTCluster is the Schema for the ktclusters API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: KTClusterSpec defines the desired state of KTCluster.
+            properties:
+              apiServerLoadBalancer:
+                description: APIServerLoadBalancer represents the API server load
+                  balancer settings
+                properties:
+                  enabled:
+                    type: boolean
+                required:
+                - enabled
+                type: object
+              controlPlaneExternalNetworkEnable:
+                type: boolean
+              identityRef:
+                description: IdentityRef holds the identity reference for OpenStack
+                properties:
+                  cloudName:
+                    type: string
+                  name:
+                    type: string
+                type: object
+              managedSecurityGroups:
+                description: ManagedSecurityGroups contains security group rules for
+                  nodes
+                properties:
+                  controlPlaneRules:
+                    description: SecurityGroupRule represents individual security
+                      group rules
+                    properties:
+                      action:
+                        type: string
+                      direction:
+                        type: string
+                      dstip:
+                        type: string
+                      endPort:
+                        type: string
+                      protocol:
+                        type: string
+                      startPort:
+                        type: string
+                    type: object
+                  enableOutboundInternetTraffic:
+                    type: boolean
+                  workerRules:
+                    description: SecurityGroupRule represents individual security
+                      group rules
+                    properties:
+                      action:
+                        type: string
+                      direction:
+                        type: string
+                      dstip:
+                        type: string
+                      endPort:
+                        type: string
+                      protocol:
+                        type: string
+                      startPort:
+                        type: string
+                    type: object
+                type: object
+            type: object
+          status:
+            description: KTClusterStatus defines the observed state of KTCluster.
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.4
+  name: ktmachines.infrastructure.dcnlab.ssu.ac.kr
+spec:
+  group: infrastructure.dcnlab.ssu.ac.kr
+  names:
+    kind: KTMachine
+    listKind: KTMachineList
+    plural: ktmachines
+    singular: ktmachine
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: KTMachine is the Schema for the ktmachines API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: KTMachineSpec defines the desired state of KTMachine.
+            properties:
+              availabilityZone:
+                type: string
+              blockDeviceMapping:
+                items:
+                  properties:
+                    bootIndex:
+                      type: integer
+                    destinationType:
+                      type: string
+                    id:
+                      type: string
+                    sourceType:
+                      type: string
+                    volumeSize:
+                      type: integer
+                  type: object
+                type: array
+              clusterName:
+                description: Foo is an example field of KTMachine. Edit ktmachine_types.go
+                  to remove/update
+                type: string
+              controlPlaneNumber:
+                type: integer
+              flavor:
+                type: string
+              networkTier:
+                items:
+                  properties:
+                    id:
+                      type: string
+                  type: object
+                type: array
+              networks:
+                items:
+                  properties:
+                    id:
+                      type: string
+                  type: object
+                type: array
+              ports:
+                items:
+                  description: Port defines a network configuration or IP details
+                  properties:
+                    fixedIPs:
+                      items:
+                        description: FixedIP represents fixed IP information with
+                          subnet details
+                        properties:
+                          subnet:
+                            description: Subnet holds the subnet ID information
+                            properties:
+                              id:
+                                type: string
+                            type: object
+                        type: object
+                      type: array
+                    network:
+                      description: Network holds the network details such as name,
+                        tags, or ID
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        tags:
+                          type: string
+                      type: object
+                  type: object
+                type: array
+              sshKeyName:
+                type: string
+              userData:
+                type: string
+            type: object
+          status:
+            description: KTMachineStatus defines the observed state of KTMachine.
+            properties:
+              AssignedPublicIPs:
+                items:
+                  properties:
+                    id:
+                      type: string
+                    ip:
+                      type: string
+                    pairedPvtNetwork:
+                      properties:
+                        networkID:
+                          type: string
+                        networkName:
+                          type: string
+                        networkOsID:
+                          type: string
+                        vmPvtIp:
+                          type: string
+                      type: object
+                    staticNatId:
+                      type: string
+                  type: object
+                type: array
+              OS-DCF:diskConfig:
+                type: string
+              OS-EXT-AZ:availability_zone:
+                type: string
+              OS-EXT-STS:power_state:
+                type: integer
+              OS-EXT-STS:task_state:
+                type: string
+              OS-EXT-STS:vm_state:
+                type: string
+              OS-SRV-USG:launched_at:
+                type: string
+              OS-SRV-USG:terminated_at:
+                type: string
+              accessIPv4:
+                type: string
+              accessIPv6:
+                type: string
+              addresses:
+                additionalProperties:
+                  items:
+                    properties:
+                      OS-EXT-IPS-MAC:mac_addr:
+                        type: string
+                      OS-EXT-IPS:type:
+                        type: string
+                      addr:
+                        type: string
+                      version:
+                        type: integer
+                    type: object
+                  type: array
+                description: Metadata          map[string]interface{} `json:"metadata,omitempty"`
+                type: object
+              adminPass:
+                type: string
+              config_drive:
+                type: string
+              controlPlaneRef:
+                description: added by control-plane node to allow worker nodes to
+                  check for respective CP
+                properties:
+                  lastTransactionTime:
+                    type: string
+                  status:
+                    type: boolean
+                  type:
+                    type: string
+                type: object
+              created:
+                type: string
+              description:
+                type: string
+              flavor:
+                properties:
+                  disk:
+                    type: integer
+                  ephemeral:
+                    type: integer
+                  extra_specs:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  original_name:
+                    type: string
+                  ram:
+                    type: integer
+                  swap:
+                    type: integer
+                  vcpus:
+                    type: integer
+                type: object
+              hostId:
+                type: string
+              id:
+                description: |-
+                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+                  Important: Run "make" to regenerate code after modifying this file
+                type: string
+              image:
+                type: string
+              key_name:
+                type: string
+              links:
+                items:
+                  description: Supporting structs
+                  properties:
+                    href:
+                      type: string
+                    rel:
+                      type: string
+                  type: object
+                type: array
+              locked:
+                type: boolean
+              name:
+                type: string
+              os-extended-volumes:volumes_attached:
+                items:
+                  properties:
+                    delete_on_termination:
+                      type: boolean
+                    id:
+                      type: string
+                  type: object
+                type: array
+              progress:
+                type: integer
+              securityGroups:
+                items:
+                  properties:
+                    name:
+                      type: string
+                  type: object
+                type: array
+              status:
+                type: string
+              tags:
+                items:
+                  type: string
+                type: array
+              tenant_id:
+                description: New fields
+                type: string
+              trusted_image_certificates:
+                type: string
+              updated:
+                type: string
+              user_id:
+                type: string
+              workerRef:
+                description: this is for worker nodes to make sure it joined its respective
+                  cluster
+                properties:
+                  joinedControlPlane:
+                    type: boolean
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.4
+  name: ktmachinetemplates.infrastructure.dcnlab.ssu.ac.kr
+spec:
+  group: infrastructure.dcnlab.ssu.ac.kr
+  names:
+    kind: KTMachineTemplate
+    listKind: KTMachineTemplateList
+    plural: ktmachinetemplates
+    singular: ktmachinetemplate
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: KTMachineTemplate is the Schema for the ktmachinetemplates API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: KTMachineTemplateSpec defines the desired state of KTMachineTemplate.
+            properties:
+              template:
+                description: Foo is an example field of KTMachineTemplate. Edit ktmachinetemplate_types.go
+                  to remove/update
+                properties:
+                  spec:
+                    description: Spec holds details about the machine specification
+                    properties:
+                      blockDeviceMapping:
+                        items:
+                          properties:
+                            bootIndex:
+                              type: integer
+                            destinationType:
+                              type: string
+                            id:
+                              type: string
+                            sourceType:
+                              type: string
+                            volumeSize:
+                              type: integer
+                          type: object
+                        type: array
+                      flavor:
+                        type: string
+                      networkTier:
+                        items:
+                          properties:
+                            id:
+                              type: string
+                          type: object
+                        type: array
+                      ports:
+                        items:
+                          description: Port defines a network configuration or IP
+                            details
+                          properties:
+                            fixedIPs:
+                              items:
+                                description: FixedIP represents fixed IP information
+                                  with subnet details
+                                properties:
+                                  subnet:
+                                    description: Subnet holds the subnet ID information
+                                    properties:
+                                      id:
+                                        type: string
+                                    type: object
+                                type: object
+                              type: array
+                            network:
+                              description: Network holds the network details such
+                                as name, tags, or ID
+                              properties:
+                                id:
+                                  type: string
+                                name:
+                                  type: string
+                                tags:
+                                  type: string
+                              type: object
+                          type: object
+                        type: array
+                      sshKeyName:
+                        type: string
+                    type: object
+                type: object
+            type: object
+          status:
+            description: KTMachineTemplateStatus defines the observed state of KTMachineTemplate.
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.4
+  name: ktnetworkfirewalls.infrastructure.dcnlab.ssu.ac.kr
+spec:
+  group: infrastructure.dcnlab.ssu.ac.kr
+  names:
+    kind: KTNetworkFirewall
+    listKind: KTNetworkFirewallList
+    plural: ktnetworkfirewalls
+    singular: ktnetworkfirewall
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: KTNetworkFirewall is the Schema for the ktnetworkfirewalls API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: KTNetworkFirewallSpec defines the desired state of KTNetworkFirewall.
+            properties:
+              firewallRules:
+                description: Foo is an example field of KTNetworkFirewall. Edit ktnetworkfirewall_types.go
+                  to remove/update
+                items:
+                  properties:
+                    action:
+                      type: string
+                    dstAddress:
+                      items:
+                        type: string
+                      type: array
+                    dstNetwork:
+                      items:
+                        type: string
+                      type: array
+                    endport:
+                      type: string
+                    protocol:
+                      type: string
+                    srcAddress:
+                      items:
+                        type: string
+                      type: array
+                    srcNat:
+                      type: boolean
+                    srcNetwork:
+                      items:
+                        type: string
+                      type: array
+                    startport:
+                      type: string
+                    staticNatId:
+                      type: string
+                  required:
+                  - action
+                  - endport
+                  - protocol
+                  - srcNat
+                  - srcNetwork
+                  - startport
+                  - staticNatId
+                  type: object
+                type: array
+            type: object
+          status:
+            description: KTNetworkFirewallStatus defines the observed state of KTNetworkFirewall.
+            properties:
+              firewallJobs:
+                description: |-
+                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+                  Important: Run "make" to regenerate code after modifying this file
+                items:
+                  properties:
+                    detail:
+                      type: string
+                    jobId:
+                      type: string
+                    policyId:
+                      type: string
+                    vpcId:
+                      type: string
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.4
+  name: ktpublicnetworks.infrastructure.dcnlab.ssu.ac.kr
+spec:
+  group: infrastructure.dcnlab.ssu.ac.kr
+  names:
+    kind: KTPublicNetwork
+    listKind: KTPublicNetworkList
+    plural: ktpublicnetworks
+    singular: ktpublicnetwork
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: KTPublicNetwork is the Schema for the ktpublicnetworks API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: KTPublicNetworkSpec defines the desired state of KTPublicNetwork.
+            properties:
+              foo:
+                description: Foo is an example field of KTPublicNetwork. Edit ktpublicnetwork_types.go
+                  to remove/update
+                type: string
+            type: object
+          status:
+            description: KTPublicNetworkStatus defines the observed state of KTPublicNetwork.
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.4
+  name: ktsubjecttokens.infrastructure.dcnlab.ssu.ac.kr
+spec:
+  group: infrastructure.dcnlab.ssu.ac.kr
+  names:
+    kind: KTSubjectToken
+    listKind: KTSubjectTokenList
+    plural: ktsubjecttokens
+    singular: ktsubjecttoken
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: KTSubjectToken is the Schema for the ktsubjecttokens API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: KTSubjectTokenSpec defines the desired state of KTSubjectToken.
+            properties:
+              clusterRef:
+                description: Date         string `json:"date,omitempty"`
+                properties:
+                  apiVersion:
+                    type: string
+                  kind:
+                    type: string
+                  name:
+                    type: string
+                type: object
+              subjectToken:
+                description: Foo is an example field of KTSubjectToken. Edit ktsubjecttoken_types.go
+                  to remove/update
+                type: string
+              token:
+                properties:
+                  expiresAt:
+                    type: string
+                  isDomain:
+                    type: boolean
+                type: object
+            type: object
+          status:
+            description: KTSubjectTokenStatus defines the observed state of KTSubjectToken.
+            properties:
+              createdAt:
+                type: string
+              subjectToken:
+                description: |-
+                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+                  Important: Run "make" to regenerate code after modifying this file
+                type: string
+              token:
+                properties:
+                  expiresAt:
+                    type: string
+                  isDomain:
+                    type: boolean
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.4
+  name: kubeadmconfigtemplates.infrastructure.dcnlab.ssu.ac.kr
+spec:
+  group: infrastructure.dcnlab.ssu.ac.kr
+  names:
+    kind: KubeadmConfigTemplate
+    listKind: KubeadmConfigTemplateList
+    plural: kubeadmconfigtemplates
+    singular: kubeadmconfigtemplate
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: KubeadmConfigTemplate is the Schema for the kubeadmconfigtemplates
+          API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: KubeadmConfigTemplateSpec defines the desired state of KubeadmConfigTemplate.
+            properties:
+              foo:
+                description: Foo is an example field of KubeadmConfigTemplate. Edit
+                  kubeadmconfigtemplate_types.go to remove/update
+                type: string
+            type: object
+          status:
+            description: KubeadmConfigTemplateStatus defines the observed state of
+              KubeadmConfigTemplate.
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.4
+  name: kubeadmcontrolplanes.infrastructure.dcnlab.ssu.ac.kr
+spec:
+  group: infrastructure.dcnlab.ssu.ac.kr
+  names:
+    kind: KubeadmControlPlane
+    listKind: KubeadmControlPlaneList
+    plural: kubeadmcontrolplanes
+    singular: kubeadmcontrolplane
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: KubeadmControlPlane is the Schema for the kubeadmcontrolplanes
+          API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: KubeadmControlPlaneSpec defines the desired state of KubeadmControlPlane.
+            properties:
+              foo:
+                description: Foo is an example field of KubeadmControlPlane. Edit
+                  kubeadmcontrolplane_types.go to remove/update
+                type: string
+            type: object
+          status:
+            description: KubeadmControlPlaneStatus defines the observed state of KubeadmControlPlane.
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.4
+  name: machinedeployments.infrastructure.dcnlab.ssu.ac.kr
+spec:
+  group: infrastructure.dcnlab.ssu.ac.kr
+  names:
+    kind: MachineDeployment
+    listKind: MachineDeploymentList
+    plural: machinedeployments
+    singular: machinedeployment
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: MachineDeployment is the Schema for the machinedeployments API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: MachineDeploymentSpec defines the desired state of MachineDeployment.
+            properties:
+              replicas:
+                description: |-
+                  Foo is an example field of MachineDeployment. Edit machinedeployment_types.go to remove/update
+                  ClusterName string      `json:"clusterName"`
+                type: integer
+              selector:
+                description: Selector defines the labels used for matching machines
+                properties:
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    type: object
+                type: object
+              template:
+                properties:
+                  spec:
+                    description: MachineSpecDetails holds detailed specifications
+                      for a machine
+                    properties:
+                      bootstrap:
+                        description: Bootstrap holds bootstrap configuration reference
+                        properties:
+                          configRef:
+                            description: ConfigRef defines the reference to a bootstrap
+                              configuration
+                            properties:
+                              apiVersion:
+                                type: string
+                              kind:
+                                type: string
+                              name:
+                                type: string
+                            type: object
+                        type: object
+                      clusterName:
+                        type: string
+                      failureDomain:
+                        type: string
+                      infrastructureRef:
+                        description: InfrastructureRef defines the infrastructure
+                          reference details
+                        properties:
+                          apiVersion:
+                            type: string
+                          kind:
+                            type: string
+                          name:
+                            type: string
+                        type: object
+                      version:
+                        type: string
+                    type: object
+                type: object
+              type:
+                type: string
+            required:
+            - replicas
+            - type
+            type: object
+          status:
+            description: MachineDeploymentStatus defines the observed state of MachineDeployment.
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-controller-manager
+  namespace: kt-cloud-operator-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-leader-election-role
+  namespace: kt-cloud-operator-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-cluster-editor-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - clusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - clusters/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-cluster-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - clusters
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - clusters/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-ktcluster-editor-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktclusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktclusters/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-ktcluster-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktclusters
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktclusters/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-ktmachine-editor-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktmachines
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktmachines/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-ktmachine-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktmachines
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktmachines/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-ktmachinetemplate-editor-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktmachinetemplates
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktmachinetemplates/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-ktmachinetemplate-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktmachinetemplates
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktmachinetemplates/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-ktnetworkfirewall-editor-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktnetworkfirewalls
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktnetworkfirewalls/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-ktnetworkfirewall-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktnetworkfirewalls
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktnetworkfirewalls/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-ktpublicnetwork-editor-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktpublicnetworks
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktpublicnetworks/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-ktpublicnetwork-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktpublicnetworks
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktpublicnetworks/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-ktsubjecttoken-editor-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktsubjecttokens
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktsubjecttokens/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-ktsubjecttoken-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktsubjecttokens
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktsubjecttokens/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-kubeadmconfigtemplate-editor-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - kubeadmconfigtemplates
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - kubeadmconfigtemplates/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-kubeadmconfigtemplate-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - kubeadmconfigtemplates
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - kubeadmconfigtemplates/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-kubeadmcontrolplane-editor-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - kubeadmcontrolplanes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - kubeadmcontrolplanes/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-kubeadmcontrolplane-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - kubeadmcontrolplanes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - kubeadmcontrolplanes/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-machinedeployment-editor-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - machinedeployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - machinedeployments/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-machinedeployment-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - machinedeployments
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - machinedeployments/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kt-cloud-operator-manager-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - clusters
+  - ktclusters
+  - ktmachines
+  - ktmachinetemplates
+  - ktnetworkfirewalls
+  - ktpublicnetworks
+  - ktsubjecttokens
+  - kubeadmconfigtemplates
+  - kubeadmcontrolplanes
+  - machinedeployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - clusters/finalizers
+  - ktclusters/finalizers
+  - ktmachines/finalizers
+  - ktmachinetemplates/finalizers
+  - ktnetworkfirewalls/finalizers
+  - ktpublicnetworks/finalizers
+  - ktsubjecttokens/finalizers
+  - kubeadmconfigtemplates/finalizers
+  - kubeadmcontrolplanes/finalizers
+  - machinedeployments/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - clusters/status
+  - ktclusters/status
+  - ktmachines/status
+  - ktmachinetemplates/status
+  - ktnetworkfirewalls/status
+  - ktpublicnetworks/status
+  - ktsubjecttokens/status
+  - kubeadmconfigtemplates/status
+  - kubeadmcontrolplanes/status
+  - machinedeployments/status
+  verbs:
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kt-cloud-operator-metrics-auth-role
+rules:
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kt-cloud-operator-metrics-reader
+rules:
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-leader-election-rolebinding
+  namespace: kt-cloud-operator-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kt-cloud-operator-leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: kt-cloud-operator-controller-manager
+  namespace: kt-cloud-operator-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kt-cloud-operator-manager-role
+subjects:
+- kind: ServiceAccount
+  name: kt-cloud-operator-controller-manager
+  namespace: kt-cloud-operator-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kt-cloud-operator-metrics-auth-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kt-cloud-operator-metrics-auth-role
+subjects:
+- kind: ServiceAccount
+  name: kt-cloud-operator-controller-manager
+  namespace: kt-cloud-operator-system
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+    control-plane: controller-manager
+  name: kt-cloud-operator-controller-manager-metrics-service
+  namespace: kt-cloud-operator-system
+spec:
+  ports:
+  - name: https
+    port: 8443
+    protocol: TCP
+    targetPort: 8443
+  selector:
+    control-plane: controller-manager
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+    control-plane: controller-manager
+  name: kt-cloud-operator-controller-manager
+  namespace: kt-cloud-operator-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+      labels:
+        control-plane: controller-manager
+    spec:
+      containers:
+      - args:
+        - --metrics-bind-address=:8443
+        - --leader-elect
+        - --health-probe-bind-address=:8081
+        command:
+        - /manager
+        image: vitu1/kt-cloud-operator:v0.1
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: manager
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 10m
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+      securityContext:
+        runAsNonRoot: true
+      serviceAccountName: kt-cloud-operator-controller-manager
+      terminationGracePeriodSeconds: 10
