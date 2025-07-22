@@ -137,3 +137,10 @@ kt-cluster1-md-0-nspmm7rznc1g51w            NotReady   <none>          4m30s   v
     2. Make sure the certificate-authority-data or certificate-authority is valid
     3. And the server URL matches one of the cert SANs (e.g., 172.25.0.118)
     But in your case, you said the public IP is not in the cert SAN — so this will fail unless you regenerate the certs (as explained earlier).
+
+* Making docker image for the controller
+  ```
+    docker login
+    make docker-build IMG=vitu1/kt-cloud-operator:v0.1
+    make docker-push IMG=vitu1/kt-cloud-operator:v0.1
+  ```
