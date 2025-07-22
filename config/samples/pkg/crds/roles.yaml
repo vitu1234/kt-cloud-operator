@@ -1,0 +1,682 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-controller-manager
+  namespace: kt-cloud-operator-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-leader-election-role
+  namespace: kt-cloud-operator-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-cluster-editor-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - clusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - clusters/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-cluster-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - clusters
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - clusters/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-ktcluster-editor-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktclusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktclusters/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-ktcluster-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktclusters
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktclusters/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-ktmachine-editor-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktmachines
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktmachines/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-ktmachine-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktmachines
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktmachines/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-ktmachinetemplate-editor-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktmachinetemplates
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktmachinetemplates/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-ktmachinetemplate-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktmachinetemplates
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktmachinetemplates/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-ktnetworkfirewall-editor-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktnetworkfirewalls
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktnetworkfirewalls/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-ktnetworkfirewall-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktnetworkfirewalls
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktnetworkfirewalls/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-ktpublicnetwork-editor-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktpublicnetworks
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktpublicnetworks/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-ktpublicnetwork-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktpublicnetworks
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktpublicnetworks/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-ktsubjecttoken-editor-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktsubjecttokens
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktsubjecttokens/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-ktsubjecttoken-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktsubjecttokens
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - ktsubjecttokens/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-kubeadmconfigtemplate-editor-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - kubeadmconfigtemplates
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - kubeadmconfigtemplates/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-kubeadmconfigtemplate-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - kubeadmconfigtemplates
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - kubeadmconfigtemplates/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-kubeadmcontrolplane-editor-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - kubeadmcontrolplanes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - kubeadmcontrolplanes/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-kubeadmcontrolplane-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - kubeadmcontrolplanes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - kubeadmcontrolplanes/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-machinedeployment-editor-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - machinedeployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - machinedeployments/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-machinedeployment-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - machinedeployments
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - machinedeployments/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kt-cloud-operator-manager-role
+rules:
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - clusters
+  - ktclusters
+  - ktmachines
+  - ktmachinetemplates
+  - ktnetworkfirewalls
+  - ktpublicnetworks
+  - ktsubjecttokens
+  - kubeadmconfigtemplates
+  - kubeadmcontrolplanes
+  - machinedeployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - clusters/finalizers
+  - ktclusters/finalizers
+  - ktmachines/finalizers
+  - ktmachinetemplates/finalizers
+  - ktnetworkfirewalls/finalizers
+  - ktpublicnetworks/finalizers
+  - ktsubjecttokens/finalizers
+  - kubeadmconfigtemplates/finalizers
+  - kubeadmcontrolplanes/finalizers
+  - machinedeployments/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - infrastructure.dcnlab.ssu.ac.kr
+  resources:
+  - clusters/status
+  - ktclusters/status
+  - ktmachines/status
+  - ktmachinetemplates/status
+  - ktnetworkfirewalls/status
+  - ktpublicnetworks/status
+  - ktsubjecttokens/status
+  - kubeadmconfigtemplates/status
+  - kubeadmcontrolplanes/status
+  - machinedeployments/status
+  verbs:
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kt-cloud-operator-metrics-auth-role
+rules:
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kt-cloud-operator-metrics-reader
+rules:
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-leader-election-rolebinding
+  namespace: kt-cloud-operator-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kt-cloud-operator-leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: kt-cloud-operator-controller-manager
+  namespace: kt-cloud-operator-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: kt-cloud-operator
+  name: kt-cloud-operator-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kt-cloud-operator-manager-role
+subjects:
+- kind: ServiceAccount
+  name: kt-cloud-operator-controller-manager
+  namespace: kt-cloud-operator-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kt-cloud-operator-metrics-auth-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kt-cloud-operator-metrics-auth-role
+subjects:
+- kind: ServiceAccount
+  name: kt-cloud-operator-controller-manager
+  namespace: kt-cloud-operator-system

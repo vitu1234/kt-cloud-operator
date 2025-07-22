@@ -128,12 +128,12 @@ func FetchAndCreateKubeconfigSecret(k8sClient client.Client, machine *v1beta1.KT
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,
-			Namespace: "default",
+			Namespace: "kt-cloud-operator-system",
 			Labels: map[string]string{
 				"cluster.x-k8s.io/cluster-name": cluster.Name,
 			},
 			Annotations: map[string]string{
-				"internal.kpt.dev/upstream-identifier": fmt.Sprintf("|Secret|default|%s", secretName),
+				"internal.kpt.dev/upstream-identifier": fmt.Sprintf("|Secret|kt-cloud-operator-system|%s", secretName),
 				"nephio.org/cluster-name":              cluster.Name,
 			},
 		},
@@ -151,7 +151,7 @@ func FetchAndCreateKubeconfigSecret(k8sClient client.Client, machine *v1beta1.KT
 
 	logger1.Infof("Kubeconfig secret '%s' created for %s", secretName, machine.Status.AssignedPublicIps[0].IP)
 
-	changeKubeconfigDomain(secretName, "default", k8sClient, machine.Status.AssignedPublicIps[0].IP)
+	changeKubeconfigDomain(secretName, "kt-cloud-operator-system", k8sClient, machine.Status.AssignedPublicIps[0].IP)
 	return nil
 }
 

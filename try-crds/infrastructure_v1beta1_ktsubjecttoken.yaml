@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: kt-cluster1
 spec:
-  subjectToken: gAAAAABofwZZSP-wXFX09WkFttOcNwZRBHIHdhSPAWZrJQTHBC3cuyNzxeuaK0GB4bejycO6w7XvBf3bv-OBkIGlCoQEhsXmhg7Ci1eq59T9-QZ46V2msyHiij_fsfxpZC9hQ2PlM5JUPRz2JsC0yVWkwv8x6tMoJRN1noElLkYA0rqKhntl4Nk
+  subjectToken: gAAAAABof0oH5L1YTbQLfJi_5tKCGj1ggQ6zn3q9qciUAgRELoP_45ceFUfMuwR3iYZARYs9xSnxZDOusFdg-lmc6hR51L50EXCrjdwZA8MWB7HgjHyBLWpzzfVT_xCSVr_rl0UaqR4FCIduNDfWzIGR2b-c6-kaLg_Hwh0VFnpjOqV5zy_thO8
   token:
     expiresAt: "2026-12-18T03:47:08.000000Z"
 
