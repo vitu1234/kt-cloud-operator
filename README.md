@@ -95,17 +95,22 @@ This is an kubernetes operator used create a Kubernetes cluster on KT Cloud [her
 
 ```
 # if it already exits before cluster creation, delete it
-kubectl delete secrets kt-cluster1-kubeconfig
+kubectl delete secrets kt-cluster1-kubeconfig -n kt-cloud-operator-system
 
-kubectl get secret kt-cluster1-kubeconfig -o jsonpath='{.data.value}' | base64 -d>ktcluster.kubeconfig
+kubectl get secret -n kt-cloud-operator-system  kt-cluster1-kubeconfig -o jsonpath='{.data.value}' | base64 -d > ktcluster.kubeconfig
+
 # edit the kubeconfig and comment out the certificate-authority-data and add the "insecure-skip-tls-verify: true" key value
-nano nano ktcluster.kubeconfig
+nano ktcluster.kubeconfig
+
 #add this after commenting out the above
 insecure-skip-tls-verify: true
+
 # change the server to the assigned public IP
 server: https://172.25.0.8:6443
+
 # changed to
 server: https://211.57.84.213:6443
+
 # and we have the following
 root@mgmt-control:~# nano ktcluster.kubeconfig
 root@mgmt-control:~# kubectl get nodes --kubeconfig ktcluster.kubeconfig
